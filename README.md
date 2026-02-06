@@ -1,73 +1,109 @@
-# React + TypeScript + Vite
+# Lotiq
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Lotiq** is a fast, local, browser-based editor for **Lottie JSON** files.
 
-Currently, two official plugins are available:
+It’s built for designers and developers who want to make **small fixes quickly** — without reopening After Effects or jumping between heavy tools.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Edit colors, hide layers, tweak canvas size, preview instantly, and export clean JSON.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Why Lotiq?
 
-## Expanding the ESLint configuration
+If you’ve ever:
+- Reopened After Effects just to change a single color  
+- Re-uploaded a Lottie file to fix padding  
+- Lost flow for a tiny tweak  
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Lotiq exists to remove that friction.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+**Core idea:**  
+> Make Lottie edits in seconds, not minutes.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Features (v1)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- ⚡ **Instant Lottie preview**
+  - Powered by `lottie-web`
+- 🎨 **Global color editing**
+  - Automatically detects all colors
+  - Groups identical color instances
+  - Change once → updates everywhere
+- 🧱 **Layer inspector**
+  - View layers
+  - Toggle visibility
+  - Remove layers
+- 📐 **Canvas controls**
+  - Adjust width & height
+  - Fix padding issues quickly
+- ⏯️ **Playback controls**
+  - Timeline scrubbing
+  - Speed control
+- 📤 **Export JSON**
+  - Clean output
+  - Optional minification
+- 🔁 **Undo / redo**
+- 🔒 **Runs completely locally**
+  - Files never leave your device
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## What Lotiq is NOT
+
+- ❌ Not an animation creator  
+- ❌ Not a timeline editor  
+- ❌ Not a replacement for After Effects  
+- ❌ Not a marketplace  
+
+Lotiq is a **post-production utility**, not a creative tool.
+
+---
+
+## Tech Stack
+
+- React + TypeScript
+- Vite
+- lottie-web
+- Zustand (state management)
+- shadcn/ui (UI primitives)
+- Tailwind CSS
+
+Frontend-only.  
+No backend. No auth. No database.
+
+---
+
+## Support
+
+Lotiq is free to use.
+
+If it saves you time and helps your workflow, you can support the project here:
+
+☕ **Buy me a coffee**  
+https://buymeacoffee.com/cholebhature
+
+---
+
+## Privacy
+
+- All Lottie files are processed **locally in your browser**
+- Files are **never uploaded** to any server
+- No tracking of file contents or animations
+
+---
+
+## Author
+
+Built by **Harsh** (aka *chole bhature*).
+
+Product designer who got tired of reopening After Effects for tiny Lottie fixes.
+
+- LinkedIn: https://linkedin.com/in/harsh  
+- X: https://x.com/
+
+---
+
+## License
+
+MIT
