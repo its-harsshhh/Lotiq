@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
 import { DropZone } from './DropZone';
@@ -9,6 +9,8 @@ import { Player } from './Player';
 import { Controls } from './Controls';
 import { InspectorLeft } from './InspectorLeft';
 import { InspectorRight } from './InspectorRight';
+import { CropModal } from './CropModal';
+import { ResizableLayout } from './ui/ResizableLayout';
 
 export const MainLayout = () => {
     const lottie = useLottieStore((state) => state.lottie);
@@ -16,6 +18,7 @@ export const MainLayout = () => {
     const togglePlay = usePlaybackStore((state) => state.togglePlay);
     const undo = useLottieStore((state) => state.undo);
     const redo = useLottieStore((state) => state.redo);
+    const [isCropOpen, setIsCropOpen] = useState(false);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -66,19 +69,24 @@ export const MainLayout = () => {
                     <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Close</Button>
                 </header>
 
-                <div className="flex-1 flex min-h-0 overflow-hidden">
-                    {/* Left Sidebar */}
-                    <InspectorLeft />
-
-                    {/* Center Preview */}
-                    <div className="flex-1 flex flex-col min-w-0 bg-muted/20 relative">
-                        <Player />
-                        <Controls />
-                    </div>
-
-                    {/* Right Sidebar */}
-                    <InspectorRight />
+                <div className="flex-1 min-h-0 overflow-hidden">
+                    <ResizableLayout
+                        leftPanel={<InspectorLeft />}
+                        centerPanel={
+                            <div className="h-full flex flex-col min-w-0 bg-muted/20 relative">
+                                <Player />
+                                <Controls onCrop={() => setIsCropOpen(true)} />
+                            </div>
+                        }
+                        rightPanel={<InspectorRight />}
+                        leftDefaultWidth={280}
+                        rightDefaultWidth={280}
+                        minWidth={200}
+                        maxWidth={400}
+                    />
                 </div>
+
+                <CropModal open={isCropOpen} onClose={() => setIsCropOpen(false)} />
             </div>
         );
     }
@@ -108,6 +116,29 @@ export const MainLayout = () => {
                 <div className="flex justify-center">
                     <UrlLoader />
                 </div>
+            </div>
+
+            <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-muted-foreground p-4">
+                <p>
+                    Built by <span className="font-bold text-foreground">Harsh aka chole bhature</span>. You can reach out to me through{' '}
+                    <a
+                        href="https://www.linkedin.com/in/its-harsshhh/"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline underline-offset-2 hover:text-foreground transition-colors"
+                    >
+                        LinkedIn
+                    </a>
+                    {' '}or{' '}
+                    <a
+                        href="https://x.com/Choley_Bhature"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline underline-offset-2 hover:text-foreground transition-colors"
+                    >
+                        X
+                    </a>
+                </p>
             </div>
         </div>
     );

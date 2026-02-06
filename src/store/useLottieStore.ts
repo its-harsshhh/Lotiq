@@ -16,6 +16,8 @@ interface LottieState {
     redo: () => void;
     canUndo: () => boolean;
     canRedo: () => boolean;
+    hasExportedThisSession: boolean;
+    markExported: () => void;
 }
 
 const MAX_HISTORY = 40;
@@ -111,4 +113,7 @@ export const useLottieStore = create<LottieState>((set, get) => ({
 
     canUndo: () => get().historyIndex > 0,
     canRedo: () => get().historyIndex < get().history.length - 1,
+
+    hasExportedThisSession: false,
+    markExported: () => set({ hasExportedThisSession: true }),
 }));

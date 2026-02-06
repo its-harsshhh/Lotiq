@@ -10,7 +10,7 @@ export const InspectorRight = () => {
     const [activeTab, setActiveTab] = useState<'colors' | 'images'>('colors');
 
     return (
-        <div className="w-80 border-l bg-background flex flex-col h-full">
+        <div className="w-full border-l bg-background flex flex-col h-full overflow-hidden">
             {/* Top - Canvas properties */}
             <CanvasControls />
 

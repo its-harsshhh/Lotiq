@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { usePlaybackStore } from "@/store/usePlaybackStore";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Crop } from "lucide-react";
 
-export const Controls = () => {
+interface ControlsProps {
+    onCrop?: () => void;
+}
+
+export const Controls = ({ onCrop }: ControlsProps) => {
     const { isPlaying, progress, speed, currentFrame, totalFrames } = usePlaybackStore();
     const { togglePlay, setProgress, setPlaying, setSpeed } = usePlaybackStore();
 
@@ -50,6 +54,11 @@ export const Controls = () => {
                 <Button variant="ghost" size="sm" onClick={toggleSpeed} className="w-16 font-mono">
                     {speed}x
                 </Button>
+                {onCrop && (
+                    <Button variant="ghost" size="icon" onClick={onCrop} title="Crop Animation">
+                        <Crop className="h-4 w-4" />
+                    </Button>
+                )}
             </div>
         </div>
     );

@@ -1,22 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { FileJson, Film, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { FileJson, Film, Image as ImageIcon, Loader2, Package } from 'lucide-react';
 import lottie from 'lottie-web';
 import GIF from 'gif.js';
+import JSZip from 'jszip';
 import { toast } from 'sonner';
+
+import { ExportSuccessSupport } from './ExportSuccessSupport';
 
 export const ExportPanel = () => {
     const lottieData = useLottieStore((state) => state.lottie);
     const fileName = useLottieStore((state) => state.fileName);
+    const hasExportedThisSession = useLottieStore((state) => state.hasExportedThisSession);
+    const markExported = useLottieStore((state) => state.markExported);
 
-    const [activeTab, setActiveTab] = useState<'json' | 'gif' | 'video'>('json');
+    const [activeTab, setActiveTab] = useState<'json' | 'lottie' | 'gif' | 'video'>('json');
     const [isExporting, setIsExporting] = useState(false);
     const [minify, setMinify] = useState(false);
     const [resolution, setResolution] = useState(1);
     const [fps, setFps] = useState(30);
+    const [exportSuccess, setExportSuccess] = useState(false);
+    const [showSupportForThisExport, setShowSupportForThisExport] = useState(false);
     // const [halo, setHalo] = useState("#000000"); // Future
+
+    // Reset success state on new edits
+    useEffect(() => {
+        setExportSuccess(false);
+        setShowSupportForThisExport(false);
+    }, [lottieData, activeTab]);
+
+    const handleSuccess = () => {
+        // Only show support if we haven't exported in this session yet
+        if (!hasExportedThisSession) {
+            setShowSupportForThisExport(true);
+            markExported();
+        } else {
+            setShowSupportForThisExport(false);
+        }
+        setExportSuccess(true);
+    };
 
     // --- JSON Export ---
     const handleJsonExport = () => {
@@ -27,6 +51,50 @@ export const ExportPanel = () => {
         }
         downloadBlob(new Blob([content], { type: 'application/json' }), `edited-${fileName}`);
         toast.success("JSON exported successfully");
+        handleSuccess();
+    };
+
+    // --- .Lottie Export ---
+    const handleLottieExport = async () => {
+        if (!lottieData) return;
+        setIsExporting(true);
+
+        try {
+            const zip = new JSZip();
+            const animationId = "animation_0";
+
+            // 1. Manifest
+            const manifest = {
+                version: 1,
+                generator: "Lotiq v1.0",
+                animations: [
+                    {
+                        id: animationId,
+                        speed: 1,
+                        themeColor: "#ffffff",
+                        loop: true
+                    }
+                ]
+            };
+            zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+
+            // 2. Animation (minified by default usually for .lottie, but sticking to standard)
+            const animContent = JSON.stringify(lottieData);
+            zip.file(`animations/${animationId}.json`, animContent);
+
+            // 3. Generate Zip
+            const content = await zip.generateAsync({ type: "blob" });
+
+            downloadBlob(content, `${fileName.replace('.json', '')}.lottie`);
+
+            toast.success(".LOTTIE exported successfully");
+            handleSuccess();
+        } catch (e) {
+            console.error(".LOTTIE Export Failed", e);
+            toast.error("Failed to generate .lottie file");
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     // --- Media Helpers ---
@@ -120,6 +188,7 @@ export const ExportPanel = () => {
                 anim.destroy();
                 toast.dismiss(toastId);
                 toast.success("GIF exported successfully");
+                handleSuccess();
             });
 
             gif.on('abort', () => {
@@ -193,6 +262,7 @@ export const ExportPanel = () => {
 
                 toast.dismiss(toastId);
                 toast.success("Video exported successfully");
+                handleSuccess();
             };
 
             // Custom Render Loop to ensure background
@@ -312,7 +382,7 @@ export const ExportPanel = () => {
 
             {/* Tabs */}
             <div className="flex gap-1 p-1 bg-muted rounded-lg mb-4">
-                {(['json', 'gif', 'video'] as const).map(tab => (
+                {(['json', 'lottie', 'gif', 'video'] as const).map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -342,6 +412,19 @@ export const ExportPanel = () => {
                         <Button className="w-full" onClick={handleJsonExport}>
                             <FileJson className="mr-2 size-4" />
                             Export JSON <span className="ml-1 opacity-60 text-[10px]">({getJsonSize()})</span>
+                        </Button>
+                    </div>
+                )}
+
+                {activeTab === 'lottie' && (
+                    <div className="space-y-4">
+                        <p className="text-[10px] text-muted-foreground text-center px-4">
+                            Exports a compressed .lottie file containing the animation and manifest.
+                            Supported by all modern Lottie players.
+                        </p>
+                        <Button className="w-full" onClick={handleLottieExport} disabled={isExporting}>
+                            {isExporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Package className="mr-2 size-4" />}
+                            {isExporting ? "Processing..." : "Export .LOTTIE"}
                         </Button>
                     </div>
                 )}
@@ -398,6 +481,8 @@ export const ExportPanel = () => {
                         )}
                     </div>
                 )}
+
+                {exportSuccess && <ExportSuccessSupport showSupport={showSupportForThisExport} />}
             </div>
         </div>
     );
