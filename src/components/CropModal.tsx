@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import lottie, { AnimationItem } from "lottie-web";
+import lottie, { type AnimationItem } from "lottie-web";
 import { Rnd } from "react-rnd";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -222,8 +222,8 @@ export const CropModal = ({ open, onClose }: CropModalProps) => {
                             <Rnd
                                 size={{ width: crop.w, height: crop.h }}
                                 position={{ x: crop.x, y: crop.y }}
-                                onDragStop={(e, d) => setCrop(c => ({ ...c, x: d.x, y: d.y }))}
-                                onResizeStop={(e, direction, ref, delta, position) => {
+                                onDragStop={(_e, d) => setCrop(c => ({ ...c, x: d.x, y: d.y }))}
+                                onResizeStop={(_e, _direction, ref, _delta, position) => {
                                     setCrop({
                                         w: parseInt(ref.style.width),
                                         h: parseInt(ref.style.height),
