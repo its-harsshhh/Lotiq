@@ -18,7 +18,7 @@ If you’ve ever:
 Lotiq exists to remove that friction.
 
 **Core idea:**  
-> Make Lottie edits in seconds, not minutes.
+> Edits Lotties in seconds, not minutes.
 
 ---
 
