@@ -1,14 +1,38 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
+import { v4 as uuidv4 } from 'uuid';
 import type { LottieJSON } from '../engine/lottie-schema';
 
+export interface Page {
+    id: string;
+    name: string;
+    lottie: LottieJSON | null;
+    fileName: string;
+    history: LottieJSON[];
+    historyIndex: number;
+}
+
 interface LottieState {
+    // Current Active View (Mapped to Active Page)
     lottie: LottieJSON | null;
     fileName: string;
     history: LottieJSON[];
     historyIndex: number;
 
-    // Actions
+    // Multi-Page State
+    pages: Page[];
+    activePageId: string;
+
+    // Page Actions
+    addPage: () => void;
+    removePage: (id: string) => void;
+    renamePage: (id: string, name: string) => void;
+    setActivePage: (id: string) => void;
+
+
+
+    // Lottie Actions
+    renameLottie: (name: string) => void;
     loadLottie: (json: LottieJSON, fileName: string) => void;
     updateLottie: (recipe: (draft: LottieJSON) => void, skipHistory?: boolean) => void;
     commit: () => void;
@@ -16,104 +40,236 @@ interface LottieState {
     redo: () => void;
     canUndo: () => boolean;
     canRedo: () => boolean;
+
     hasExportedThisSession: boolean;
     markExported: () => void;
+
+    // Editor UI State
+    isEditorMode: boolean;
+    setEditorMode: (active: boolean) => void;
 }
 
 const MAX_HISTORY = 40;
 
-export const useLottieStore = create<LottieState>((set, get) => ({
+const createNewPage = (name: string): Page => ({
+    id: uuidv4(),
+    name,
     lottie: null,
     fileName: 'animation.json',
     history: [],
-    historyIndex: -1,
+    historyIndex: -1
+});
 
-    loadLottie: (json, fileName) => {
-        set({
-            lottie: json,
-            fileName,
-            history: [json],
-            historyIndex: 0
-        });
-    },
+export const useLottieStore = create<LottieState>((set, get) => {
+    // Initialize with one default page
+    const defaultPage = createNewPage('Page 1');
 
-    updateLottie: (recipe, skipHistory = false) => {
-        set(produce((state: LottieState) => {
-            if (!state.lottie) return;
+    return {
+        // Initial State maps to the default page
+        lottie: null,
+        fileName: 'animation.json',
+        history: [],
+        historyIndex: -1,
 
-            // Create new state based on recipe
-            const nextLottie = produce(state.lottie, recipe);
+        isEditorMode: false,
+        setEditorMode: (active) => set({ isEditorMode: active }),
 
-            // If no change, do nothing
-            if (nextLottie === state.lottie) return;
+        pages: [defaultPage],
+        activePageId: defaultPage.id,
 
-            state.lottie = nextLottie;
+        // --- Page Actions ---
 
-            if (!skipHistory) {
-                // Slice history if we were in the past
-                const newHistory = state.history.slice(0, state.historyIndex + 1);
+        addPage: () => {
+            set(produce((state: LottieState) => {
+                const newPage = createNewPage(`Page ${state.pages.length + 1}`);
+                state.pages.push(newPage);
 
-                // Push new state
-                newHistory.push(nextLottie);
+                // Switch to new page
+                state.activePageId = newPage.id;
+                state.lottie = newPage.lottie;
+                state.fileName = newPage.fileName;
+                state.history = newPage.history;
+                state.historyIndex = newPage.historyIndex;
+            }));
+        },
 
-                // Cap history length
-                if (newHistory.length > MAX_HISTORY) {
-                    newHistory.shift();
+        removePage: (id: string) => {
+            set(produce((state: LottieState) => {
+                if (state.pages.length <= 1) return; // Prevent deleting last page
+
+                const pageIndex = state.pages.findIndex(p => p.id === id);
+                if (pageIndex === -1) return;
+
+                state.pages.splice(pageIndex, 1);
+
+                // If we deleted the active page, switch to another
+                if (state.activePageId === id) {
+                    const newActiveIndex = Math.max(0, pageIndex - 1);
+                    const newActivePage = state.pages[newActiveIndex];
+
+                    state.activePageId = newActivePage.id;
+                    state.lottie = newActivePage.lottie;
+                    state.fileName = newActivePage.fileName;
+                    state.history = newActivePage.history;
+                    state.historyIndex = newActivePage.historyIndex;
+                }
+            }));
+        },
+
+        renamePage: (id: string, name: string) => {
+            set(produce((state: LottieState) => {
+                const page = state.pages.find(p => p.id === id);
+                if (page) {
+                    page.name = name;
+                }
+            }));
+        },
+
+        setActivePage: (id: string) => {
+            set(produce((state: LottieState) => {
+                const page = state.pages.find(p => p.id === id);
+                if (page) {
+                    state.activePageId = page.id;
+                    state.lottie = page.lottie;
+                    state.fileName = page.fileName;
+                    state.history = page.history;
+                    state.historyIndex = page.historyIndex;
+                }
+            }));
+        },
+
+        // --- Lottie Actions (Synced to Active Page) ---
+
+        renameLottie: (name: string) => {
+            set(produce((state: LottieState) => {
+                state.fileName = name;
+                const page = state.pages.find(p => p.id === state.activePageId);
+                if (page) {
+                    page.fileName = name;
+                }
+            }));
+        },
+
+        loadLottie: (json, fileName) => {
+            set(produce((state: LottieState) => {
+                // Update Workspace
+                state.lottie = json;
+                state.fileName = fileName;
+                state.fileName = fileName;
+                state.history = [json];
+                state.historyIndex = 0;
+
+                state.isEditorMode = true; // Switch to editor view if not already
+
+                // Sync to Active Page
+                const page = state.pages.find(p => p.id === state.activePageId);
+                if (page) {
+                    page.lottie = json;
+                    page.fileName = fileName;
+                    page.history = [json];
+                    page.historyIndex = 0;
+                }
+            }));
+        },
+
+        updateLottie: (recipe, skipHistory = false) => {
+            set(produce((state: LottieState) => {
+                if (!state.lottie) return;
+
+                const nextLottie = produce(state.lottie, recipe);
+                if (nextLottie === state.lottie) return;
+
+                // Update Workspace
+                state.lottie = nextLottie;
+
+                // Update History
+                if (!skipHistory) {
+                    const newHistory = state.history.slice(0, state.historyIndex + 1);
+                    newHistory.push(nextLottie);
+                    if (newHistory.length > MAX_HISTORY) newHistory.shift();
+
+                    state.history = newHistory;
+                    state.historyIndex = newHistory.length - 1;
                 }
 
-                state.history = newHistory;
-                state.historyIndex = newHistory.length - 1;
-            }
-        }));
-    },
-
-    commit: () => {
-        set(produce((state: LottieState) => {
-            if (!state.lottie) return;
-
-            // Check if current state is ahead of history
-            const currentHistoryItem = state.history[state.historyIndex];
-            if (state.lottie !== currentHistoryItem) {
-                // Slice history if we were in the past
-                const newHistory = state.history.slice(0, state.historyIndex + 1);
-
-                // Push new state
-                newHistory.push(state.lottie);
-
-                // Cap history length
-                if (newHistory.length > MAX_HISTORY) {
-                    newHistory.shift();
+                // Sync to Active Page
+                const page = state.pages.find(p => p.id === state.activePageId);
+                if (page) {
+                    page.lottie = state.lottie;
+                    page.history = state.history;
+                    page.historyIndex = state.historyIndex;
                 }
+            }));
+        },
 
-                state.history = newHistory;
-                state.historyIndex = newHistory.length - 1;
-            }
-        }));
-    },
+        commit: () => {
+            set(produce((state: LottieState) => {
+                if (!state.lottie) return;
 
-    undo: () => {
-        const { history, historyIndex } = get();
-        if (historyIndex > 0) {
-            set({
-                lottie: history[historyIndex - 1],
-                historyIndex: historyIndex - 1
-            });
-        }
-    },
+                // Check if current state is ahead of history
+                const currentHistoryItem = state.history[state.historyIndex];
+                if (state.lottie !== currentHistoryItem) {
+                    // Slice history if we were in the past
+                    const newHistory = state.history.slice(0, state.historyIndex + 1);
 
-    redo: () => {
-        const { history, historyIndex } = get();
-        if (historyIndex < history.length - 1) {
-            set({
-                lottie: history[historyIndex + 1],
-                historyIndex: historyIndex + 1
-            });
-        }
-    },
+                    // Push new state
+                    newHistory.push(state.lottie);
 
-    canUndo: () => get().historyIndex > 0,
-    canRedo: () => get().historyIndex < get().history.length - 1,
+                    // Cap history length
+                    if (newHistory.length > MAX_HISTORY) {
+                        newHistory.shift();
+                    }
 
-    hasExportedThisSession: false,
-    markExported: () => set({ hasExportedThisSession: true }),
-}));
+                    state.history = newHistory;
+                    state.historyIndex = newHistory.length - 1;
+
+                    // Sync to Active Page
+                    const page = state.pages.find(p => p.id === state.activePageId);
+                    if (page) {
+                        page.history = state.history;
+                        page.historyIndex = state.historyIndex;
+                        page.lottie = state.lottie;
+                    }
+                }
+            }));
+        },
+
+        undo: () => {
+            set(produce((state: LottieState) => {
+                if (state.historyIndex > 0) {
+                    state.historyIndex--;
+                    state.lottie = state.history[state.historyIndex];
+
+                    // Sync
+                    const page = state.pages.find(p => p.id === state.activePageId);
+                    if (page) {
+                        page.historyIndex = state.historyIndex;
+                        page.lottie = state.lottie;
+                    }
+                }
+            }));
+        },
+
+        redo: () => {
+            set(produce((state: LottieState) => {
+                if (state.historyIndex < state.history.length - 1) {
+                    state.historyIndex++;
+                    state.lottie = state.history[state.historyIndex];
+
+                    // Sync
+                    const page = state.pages.find(p => p.id === state.activePageId);
+                    if (page) {
+                        page.historyIndex = state.historyIndex;
+                        page.lottie = state.lottie;
+                    }
+                }
+            }));
+        },
+
+        canUndo: () => get().historyIndex > 0,
+        canRedo: () => get().historyIndex < get().history.length - 1,
+
+        hasExportedThisSession: false,
+        markExported: () => set({ hasExportedThisSession: true }),
+    };
+});

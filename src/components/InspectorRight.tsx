@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLottieStore } from "@/store/useLottieStore";
 import { ColorPalette } from "./ColorPalette";
 import { ExportPanel } from "./ExportPanel";
 import { CanvasControls } from "./CanvasControls";
@@ -7,7 +8,12 @@ import { cn } from "@/lib/utils";
 import { Palette, ImageIcon } from "lucide-react";
 
 export const InspectorRight = () => {
+    const lottie = useLottieStore((state) => state.lottie);
     const [activeTab, setActiveTab] = useState<'colors' | 'images'>('colors');
+
+    if (!lottie) {
+        return <div className="w-full border-l bg-background h-full transition-colors" />;
+    }
 
     return (
         <div className="w-full border-l bg-background flex flex-col h-full overflow-hidden">

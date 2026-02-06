@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, EyeOff, Trash2, Layers as LayersIcon, Folder } from 'lucide-react';
+import { Eye, EyeOff, Trash2, Layers as LayersIcon, Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const LayerList = () => {
@@ -16,6 +16,7 @@ export const LayerList = () => {
     const [editingLayerId, setEditingLayerId] = useState<number | null>(null);
     const [tempName, setTempName] = useState("");
     const [selectedLayerIds, setSelectedLayerIds] = useState<number[]>([]);
+    const [isExpanded, setIsExpanded] = useState(true);
 
     if (!lottie) return null;
 
@@ -129,77 +130,85 @@ export const LayerList = () => {
 
     return (
         <div className="flex flex-col h-full">
-            <div className="p-4 border-b flex items-center gap-2 font-medium bg-muted/30">
+            <div
+                className="p-4 border-b flex items-center gap-2 font-medium bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
                 <LayersIcon className="size-4" />
                 Layers
-                <span className="ml-auto text-xs text-muted-foreground">{lottie.layers.length}</span>
+                <div className="ml-auto flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{lottie.layers.length}</span>
+                    {isExpanded ? <ChevronDown className="size-3.5 text-muted-foreground" /> : <ChevronRight className="size-3.5 text-muted-foreground" />}
+                </div>
             </div>
 
-            <ScrollArea className="flex-1">
-                <div className="flex flex-col select-none">
-                    {lottie.layers.map((layer) => {
-                        const isSelected = selectedLayerIds.includes(layer.ind);
-                        const isGroup = layer.ty === 3; // Null layer acting as group
+            {isExpanded && (
+                <ScrollArea className="flex-1">
+                    <div className="flex flex-col select-none">
+                        {lottie.layers.map((layer) => {
+                            const isSelected = selectedLayerIds.includes(layer.ind);
+                            const isGroup = layer.ty === 3; // Null layer acting as group
 
-                        return (
-                            <div
-                                key={layer.ind}
-                                onClick={(e) => handleSelect(layer.ind, e)}
-                                className={cn(
-                                    "flex items-center gap-3 p-3 text-sm border-b border-border/40 group transition-colors cursor-pointer",
-                                    isSelected ? "bg-accent/80 text-accent-foreground" : "hover:bg-muted/50",
-                                    hasParent(layer) && "pl-8 border-l-4 border-l-transparent ml-2" // Indent
-                                )}
-                            >
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0"
-                                    onClick={(e) => { e.stopPropagation(); handleToggle(layer.ind); }}
-                                >
-                                    {layer.hd ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-                                </Button>
-
-                                <div className="flex-1 min-w-0 flex items-center gap-2">
-                                    {isGroup && <Folder className="size-3 text-blue-400 fill-blue-400/20" />}
-
-                                    {editingLayerId === layer.ind ? (
-                                        <Input
-                                            autoFocus
-                                            value={tempName}
-                                            onChange={(e) => setTempName(e.target.value)}
-                                            onBlur={saveName}
-                                            onKeyDown={handleKeyDownInput}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="h-6 text-xs px-1 py-0"
-                                        />
-                                    ) : (
-                                        <div
-                                            className="truncate font-medium w-full"
-                                            onDoubleClick={(e) => { e.stopPropagation(); startEditing(layer.ind, layer.nm || `Layer ${layer.ind}`); }}
-                                        >
-                                            {layer.nm || `Layer ${layer.ind}`}
-                                        </div>
+                            return (
+                                <div
+                                    key={layer.ind}
+                                    onClick={(e) => handleSelect(layer.ind, e)}
+                                    className={cn(
+                                        "flex items-center gap-3 p-3 text-sm border-b border-border/40 group transition-colors cursor-pointer",
+                                        isSelected ? "bg-accent/80 text-accent-foreground" : "hover:bg-muted/50",
+                                        hasParent(layer) && "pl-8 border-l-4 border-l-transparent ml-2" // Indent
                                     )}
-                                </div>
-
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider shrink-0 opacity-50">
-                                    {getLayerType(layer.ty)}
-                                </span>
-
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                    onClick={(e) => { e.stopPropagation(); setDeleteLayerId(layer.ind); }}
                                 >
-                                    <Trash2 className="size-3.5" />
-                                </Button>
-                            </div>
-                        );
-                    })}
-                </div>
-            </ScrollArea>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0"
+                                        onClick={(e) => { e.stopPropagation(); handleToggle(layer.ind); }}
+                                    >
+                                        {layer.hd ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                                    </Button>
+
+                                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                                        {isGroup && <Folder className="size-3 text-blue-400 fill-blue-400/20" />}
+
+                                        {editingLayerId === layer.ind ? (
+                                            <Input
+                                                autoFocus
+                                                value={tempName}
+                                                onChange={(e) => setTempName(e.target.value)}
+                                                onBlur={saveName}
+                                                onKeyDown={handleKeyDownInput}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="h-6 text-xs px-1 py-0"
+                                            />
+                                        ) : (
+                                            <div
+                                                className="truncate font-medium w-full"
+                                                onDoubleClick={(e) => { e.stopPropagation(); startEditing(layer.ind, layer.nm || `Layer ${layer.ind}`); }}
+                                            >
+                                                {layer.nm || `Layer ${layer.ind}`}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider shrink-0 opacity-50">
+                                        {getLayerType(layer.ty)}
+                                    </span>
+
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                        onClick={(e) => { e.stopPropagation(); setDeleteLayerId(layer.ind); }}
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                    </Button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </ScrollArea>
+            )}
 
             <Dialog open={deleteLayerId !== null} onOpenChange={(open) => !open && setDeleteLayerId(null)}>
                 <DialogContent>

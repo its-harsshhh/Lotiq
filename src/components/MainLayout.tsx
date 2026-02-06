@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
-import { DropZone } from './DropZone';
-import { UrlLoader } from './UrlLoader';
-import { PasteHandler } from './PasteHandler';
+
 import { Button } from './ui/button';
 import { Player } from './Player';
 import { Controls } from './Controls';
@@ -11,14 +9,41 @@ import { InspectorLeft } from './InspectorLeft';
 import { InspectorRight } from './InspectorRight';
 import { CropModal } from './CropModal';
 import { ResizableLayout } from './ui/ResizableLayout';
+import { LandingPage } from './LandingPage';
+import { ModeToggle } from './mode-toggle';
+import { EmptyState } from './EmptyState';
 
 export const MainLayout = () => {
     const lottie = useLottieStore((state) => state.lottie);
+    const isEditorMode = useLottieStore((state) => state.isEditorMode);
     const fileName = useLottieStore((state) => state.fileName);
     const togglePlay = usePlaybackStore((state) => state.togglePlay);
     const undo = useLottieStore((state) => state.undo);
     const redo = useLottieStore((state) => state.redo);
+    const renameLottie = useLottieStore((state) => state.renameLottie);
     const [isCropOpen, setIsCropOpen] = useState(false);
+    const [editingName, setEditingName] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (fileName && editingName === null) {
+            // setEditingName(fileName); 
+            // Better to just not set it until edit mode? 
+            // Actually let's just use fileName unless editing.
+        }
+    }, [fileName]);
+
+    const handleNameBlur = () => {
+        if (editingName !== null && editingName.trim() !== "") {
+            renameLottie(editingName);
+        }
+        setEditingName(null);
+    };
+
+    const handleNameKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            (e.target as HTMLInputElement).blur();
+        }
+    };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,15 +83,24 @@ export const MainLayout = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [togglePlay, undo, redo]);
 
-    if (lottie) {
+    if (isEditorMode) {
         return (
             <div className="h-screen w-full flex flex-col">
                 <header className="border-b h-14 flex items-center px-4 justify-between bg-card z-20 relative">
                     <div className="font-bold text-xl tracking-tight">Lotiq</div>
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold text-sm">
-                        {fileName}
+                        <input
+                            className="bg-transparent text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 min-w-[100px]"
+                            value={editingName !== null ? editingName : fileName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onBlur={handleNameBlur}
+                            onKeyDown={handleNameKeyDown}
+                        />
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Close</Button>
+                    <div className="flex items-center gap-2">
+                        <ModeToggle />
+                        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Close</Button>
+                    </div>
                 </header>
 
                 <div className="flex-1 min-h-0 overflow-hidden">
@@ -74,8 +108,14 @@ export const MainLayout = () => {
                         leftPanel={<InspectorLeft />}
                         centerPanel={
                             <div className="h-full flex flex-col min-w-0 bg-muted/20 relative">
-                                <Player />
-                                <Controls onCrop={() => setIsCropOpen(true)} />
+                                {lottie ? (
+                                    <>
+                                        <Player />
+                                        <Controls onCrop={() => setIsCropOpen(true)} />
+                                    </>
+                                ) : (
+                                    <EmptyState />
+                                )}
                             </div>
                         }
                         rightPanel={<InspectorRight />}
@@ -91,55 +131,5 @@ export const MainLayout = () => {
         );
     }
 
-    return (
-        <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4 relative">
-            <PasteHandler />
-            <div className="max-w-2xl w-full flex flex-col gap-8">
-                <div className="text-center space-y-2">
-                    <h1 className="text-4xl font-bold tracking-tight">Lotiq</h1>
-                    <p className="text-muted-foreground">Fast, local Lottie editor. Drop a file or paste JSON to start.</p>
-                </div>
-
-                <div className="w-full">
-                    <DropZone />
-                </div>
-
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Or load from URL</span>
-                    </div>
-                </div>
-
-                <div className="flex justify-center">
-                    <UrlLoader />
-                </div>
-            </div>
-
-            <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-muted-foreground p-4">
-                <p>
-                    Built by <span className="font-bold text-foreground">Harsh aka chole bhature</span>. You can reach out to me through{' '}
-                    <a
-                        href="https://www.linkedin.com/in/its-harsshhh/"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline underline-offset-2 hover:text-foreground transition-colors"
-                    >
-                        LinkedIn
-                    </a>
-                    {' '}or{' '}
-                    <a
-                        href="https://x.com/Choley_Bhature"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline underline-offset-2 hover:text-foreground transition-colors"
-                    >
-                        X
-                    </a>
-                </p>
-            </div>
-        </div>
-    );
+    return <LandingPage />;
 };

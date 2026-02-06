@@ -53,12 +53,12 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-500 ease-in-out;
   }
 }
 
 .crop-drag-handle {
-    transition: opacity 0.2s;
+  transition: opacity 0.2s;
 }
-
