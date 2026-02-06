@@ -22,33 +22,6 @@ Lotiq exists to remove that friction.
 
 ---
 
-## Features (v1)
-
-- ⚡ **Instant Lottie preview**
-  - Powered by `lottie-web`
-- 🎨 **Global color editing**
-  - Automatically detects all colors
-  - Groups identical color instances
-  - Change once → updates everywhere
-- 🧱 **Layer inspector**
-  - View layers
-  - Toggle visibility
-  - Remove layers
-- 📐 **Canvas controls**
-  - Adjust width & height
-  - Fix padding issues quickly
-- ⏯️ **Playback controls**
-  - Timeline scrubbing
-  - Speed control
-- 📤 **Export JSON**
-  - Clean output
-  - Optional minification
-- 🔁 **Undo / redo**
-- 🔒 **Runs completely locally**
-  - Files never leave your device
-
----
-
 ## What Lotiq is NOT
 
 - ❌ Not an animation creator  
