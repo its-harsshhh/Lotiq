@@ -5,7 +5,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { MessageSquare, Send, Loader2, CheckCircle2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 
 export const FeedbackSection = () => {
     // STATE
