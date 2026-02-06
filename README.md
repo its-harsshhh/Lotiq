@@ -33,20 +33,6 @@ Lotiq is a **post-production utility**, not a creative tool.
 
 ---
 
-## Tech Stack
-
-- React + TypeScript
-- Vite
-- lottie-web
-- Zustand (state management)
-- shadcn/ui (UI primitives)
-- Tailwind CSS
-
-Frontend-only.  
-No backend. No auth. No database.
-
----
-
 ## Support
 
 Lotiq is free to use.
@@ -54,7 +40,7 @@ Lotiq is free to use.
 If it saves you time and helps your workflow, you can support the project here:
 
 ☕ **Buy me a coffee**  
-https://buymeacoffee.com/cholebhature
+https://buymeacoffee.com/harshpal
 
 ---
 
@@ -72,8 +58,8 @@ Built by **Harsh** (aka *chole bhature*).
 
 Product designer who got tired of reopening After Effects for tiny Lottie fixes.
 
-- LinkedIn: https://linkedin.com/in/harsh  
-- X: https://x.com/
+- LinkedIn: https://www.linkedin.com/in/its-harsshhh/
+- X: https://x.com/Choley_Bhature
 
 ---
 
