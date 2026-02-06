@@ -48,11 +48,11 @@ export const LandingPage = () => {
 
                     <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.1]">
                         Edit Lottie files <br />
-                        <span className="text-indigo-600 dark:text-indigo-400">without reopening your source file.</span>
+                        <span className="text-indigo-600 dark:text-indigo-400">in seconds, not minutes.</span>
                     </h1>
 
                     <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
-                        Lotiq is a fast, local-first Lottie editor to inspect, tweak, and export animations in seconds. Zero latency. Zero uploads. Zero data leaks.
+                        Lotiq lets you inspect, tweak, and export animations in seconds. Runs entirely in your browser.
                     </p>
 
                 </motion.div>
