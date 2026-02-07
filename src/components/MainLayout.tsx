@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Pencil } from 'lucide-react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
 
@@ -90,15 +91,16 @@ export const MainLayout = () => {
             <div className="h-screen w-full flex flex-col">
                 <header className="border-b h-14 flex items-center px-4 justify-between bg-card z-20 relative">
                     <div className="font-bold text-xl tracking-tight">Lotiq</div>
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold text-sm">
+                    <label className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold text-sm group flex items-center gap-2 cursor-pointer">
                         <input
-                            className="bg-transparent text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 min-w-[100px]"
+                            className="bg-transparent text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 min-w-[100px] hover:bg-muted/50 transition-colors"
                             value={editingName !== null ? editingName : fileName}
                             onChange={(e) => setEditingName(e.target.value)}
                             onBlur={handleNameBlur}
                             onKeyDown={handleNameKeyDown}
                         />
-                    </div>
+                        <Pencil className="size-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </label>
                     <div className="flex items-center gap-2">
                         <ModeToggle />
                         <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Close</Button>
