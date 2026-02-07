@@ -4,10 +4,11 @@ import lottie, { type AnimationItem } from "lottie-web";
 import { Rnd } from "react-rnd";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, Eye, RotateCcw } from "lucide-react";
+import { Download, Eye, RotateCcw, Film, Image } from "lucide-react";
 import { useLottieStore } from "@/store/useLottieStore";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import GIF from 'gif.js';
 
 interface CropModalProps {
     open: boolean;
@@ -163,6 +164,211 @@ export const CropModal = ({ open, onClose }: CropModalProps) => {
         onClose();
     };
 
+    const handleGifDownload = async () => {
+        const json = viewMode === 'preview' ? croppedJson : getCroppedLottie();
+        if (!json) return;
+
+        const toastId = toast.loading("Generating GIF from cropped animation...");
+
+        try {
+            const width = json.w || 500;
+            const height = json.h || 500;
+            const fps = 30;
+
+            // Create hidden container
+            const container = document.createElement('div');
+            container.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${width}px;height:${height}px;overflow:hidden;`;
+            document.body.appendChild(container);
+
+            // Load animation
+            const anim = lottie.loadAnimation({
+                container,
+                renderer: 'svg',
+                loop: false,
+                autoplay: false,
+                animationData: JSON.parse(JSON.stringify(json)),
+            });
+
+            await new Promise(resolve => {
+                if (anim.isLoaded) resolve(null);
+                else anim.addEventListener('DOMLoaded', resolve);
+            });
+            await new Promise(r => setTimeout(r, 300));
+
+            // Setup canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d')!;
+
+            // @ts-ignore
+            const gif = new GIF({
+                workers: 2,
+                quality: 10,
+                width,
+                height,
+                workerScript: '/gif.worker.js',
+                background: '#ffffff'
+            });
+
+            const totalFrames = anim.totalFrames;
+            const duration = totalFrames / anim.frameRate;
+            const outputFrames = Math.floor(duration * fps);
+
+            // Render frames
+            for (let i = 0; i < outputFrames; i++) {
+                const frame = (i / fps) * anim.frameRate;
+                anim.goToAndStop(frame, true);
+
+                // Rasterize SVG
+                const svg = container.querySelector('svg');
+                if (svg) {
+                    svg.setAttribute('width', String(width));
+                    svg.setAttribute('height', String(height));
+                    const svgString = new XMLSerializer().serializeToString(svg);
+                    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+                        const img = new window.Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        img.src = url;
+                    });
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    URL.revokeObjectURL(url);
+                }
+
+                gif.addFrame(canvas, { copy: true, delay: 1000 / fps });
+                if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
+            }
+
+            gif.on('finished', (blob: Blob) => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `cropped-${fileName.replace('.json', '')}.gif`;
+                link.click();
+                URL.revokeObjectURL(url);
+                anim.destroy();
+                container.remove();
+                toast.dismiss(toastId);
+                toast.success("GIF exported successfully!");
+                onClose();
+            });
+
+            gif.render();
+        } catch (error) {
+            console.error('GIF export error:', error);
+            toast.dismiss(toastId);
+            toast.error("Failed to export GIF");
+        }
+    };
+
+    const handleVideoDownload = async () => {
+        const json = viewMode === 'preview' ? croppedJson : getCroppedLottie();
+        if (!json) return;
+
+        const toastId = toast.loading("Generating Video from cropped animation...");
+
+        try {
+            const width = json.w || 500;
+            const height = json.h || 500;
+            const fps = 30;
+
+            // Create hidden container
+            const container = document.createElement('div');
+            container.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${width}px;height:${height}px;overflow:hidden;`;
+            document.body.appendChild(container);
+
+            // Load animation
+            const anim = lottie.loadAnimation({
+                container,
+                renderer: 'svg',
+                loop: false,
+                autoplay: false,
+                animationData: JSON.parse(JSON.stringify(json)),
+            });
+
+            await new Promise(resolve => {
+                if (anim.isLoaded) resolve(null);
+                else anim.addEventListener('DOMLoaded', resolve);
+            });
+            await new Promise(r => setTimeout(r, 300));
+
+            // Setup canvas for recording
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d')!;
+
+            // Record using MediaRecorder
+            const stream = canvas.captureStream(fps);
+            const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            const chunks: Blob[] = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `cropped-${fileName.replace('.json', '')}.webm`;
+                link.click();
+                URL.revokeObjectURL(url);
+                anim.destroy();
+                container.remove();
+                toast.dismiss(toastId);
+                toast.success("Video exported successfully!");
+                onClose();
+            };
+
+            mediaRecorder.start();
+
+            const totalFrames = anim.totalFrames;
+            const duration = totalFrames / anim.frameRate;
+            const outputFrames = Math.floor(duration * fps);
+
+            // Render frames
+            for (let i = 0; i < outputFrames; i++) {
+                const frame = (i / fps) * anim.frameRate;
+                anim.goToAndStop(frame, true);
+
+                // Rasterize SVG
+                const svg = container.querySelector('svg');
+                if (svg) {
+                    svg.setAttribute('width', String(width));
+                    svg.setAttribute('height', String(height));
+                    const svgString = new XMLSerializer().serializeToString(svg);
+                    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+                        const img = new window.Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        img.src = url;
+                    });
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    URL.revokeObjectURL(url);
+                }
+
+                await new Promise(r => setTimeout(r, 1000 / fps));
+            }
+
+            mediaRecorder.stop();
+        } catch (error) {
+            console.error('Video export error:', error);
+            toast.dismiss(toastId);
+            toast.error("Failed to export Video");
+        }
+    };
+
     // Custom Handle Styles
     const handleBaseStyle = {
         width: '12px',
@@ -273,7 +479,17 @@ export const CropModal = ({ open, onClose }: CropModalProps) => {
 
                         <Button onClick={handleDownload} className="bg-[#3d88ff] hover:bg-[#3d88ff]/90 text-white">
                             <Download className="w-4 h-4 mr-2" />
-                            {viewMode === 'preview' ? "Download This Crop" : "Download Cropped Lottie"}
+                            Lottie
+                        </Button>
+
+                        <Button onClick={handleGifDownload} variant="secondary" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                            <Image className="w-4 h-4 mr-2" />
+                            GIF
+                        </Button>
+
+                        <Button onClick={handleVideoDownload} variant="secondary" className="bg-purple-600 hover:bg-purple-700 text-white">
+                            <Film className="w-4 h-4 mr-2" />
+                            Video
                         </Button>
                     </div>
                 </div>

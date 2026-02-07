@@ -23,13 +23,25 @@ interface LottieState {
     pages: Page[];
     activePageId: string;
 
+    // Export State
+    isExporting: boolean;
+    exportProgress: number; // 0 to 1
+    exportStatus: string;
+
+    // Actions
+    setLottie: (data: LottieJSON | null) => void;
+    setFileName: (name: string) => void;
+
     // Page Actions
     addPage: () => void;
     removePage: (id: string) => void;
     renamePage: (id: string, name: string) => void;
     setActivePage: (id: string) => void;
 
-
+    // Export Actions
+    setIsExporting: (isExporting: boolean) => void;
+    setExportProgress: (progress: number) => void;
+    setExportStatus: (status: string) => void;
 
     // Lottie Actions
     renameLottie: (name: string) => void;
@@ -70,6 +82,15 @@ export const useLottieStore = create<LottieState>((set, get) => {
         fileName: 'animation.json',
         history: [],
         historyIndex: -1,
+
+        // Export State
+        isExporting: false,
+        exportProgress: 0,
+        exportStatus: '',
+
+        // Simple setters
+        setLottie: (data) => set({ lottie: data }),
+        setFileName: (name) => set({ fileName: name }),
 
         isEditorMode: false,
         setEditorMode: (active) => set({ isEditorMode: active }),
@@ -271,5 +292,10 @@ export const useLottieStore = create<LottieState>((set, get) => {
 
         hasExportedThisSession: false,
         markExported: () => set({ hasExportedThisSession: true }),
+
+        // Export Actions
+        setIsExporting: (isExporting) => set({ isExporting }),
+        setExportProgress: (exportProgress) => set({ exportProgress }),
+        setExportStatus: (exportStatus) => set({ exportStatus }),
     };
 });

@@ -6,6 +6,8 @@ import { FileJson, Film, Image as ImageIcon, Loader2, Package } from 'lucide-rea
 import lottie from 'lottie-web';
 import GIF from 'gif.js';
 import JSZip from 'jszip';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util';
 import { toast } from 'sonner';
 
 import { ExportSuccessSupport } from './ExportSuccessSupport';
@@ -16,14 +18,39 @@ export const ExportPanel = () => {
     const hasExportedThisSession = useLottieStore((state) => state.hasExportedThisSession);
     const markExported = useLottieStore((state) => state.markExported);
 
+    const isExporting = useLottieStore((state) => state.isExporting);
+    const setIsExporting = useLottieStore((state) => state.setIsExporting);
+    const setExportProgress = useLottieStore((state) => state.setExportProgress);
+    const setExportStatus = useLottieStore((state) => state.setExportStatus);
+
     const [activeTab, setActiveTab] = useState<'json' | 'lottie' | 'gif' | 'video'>('json');
-    const [isExporting, setIsExporting] = useState(false);
+    // const [isExporting, setIsExporting] = useState(false); // Removed local state
     const [minify, setMinify] = useState(false);
-    const [resolution, setResolution] = useState(1);
+    const [resolution, setResolution] = useState(1); // Scale for GIF
+    const [videoQuality, setVideoQuality] = useState<'144p' | '360p' | '480p' | '720p' | '1080p'>('720p');
+    const [videoFormat, setVideoFormat] = useState<'webm' | 'mp4'>('webm'); // WebM is instant, MP4 is slow
     const [fps, setFps] = useState(30);
+
+    // Quality presets (height in pixels)
+    const qualityPresets = {
+        '144p': 144,
+        '360p': 360,
+        '480p': 480,
+        '720p': 720,
+        '1080p': 1080
+    };
+
+    // Calculate scale for video based on quality preset
+    const getVideoScale = () => {
+        if (!lottieData) return 1;
+        const targetHeight = qualityPresets[videoQuality];
+        return targetHeight / lottieData.h;
+    };
     const [exportSuccess, setExportSuccess] = useState(false);
     const [showSupportForThisExport, setShowSupportForThisExport] = useState(false);
-    // const [halo, setHalo] = useState("#000000"); // Future
+
+    // FFmpeg ref
+    const ffmpegRef = useState(new FFmpeg())[0];
 
     // Reset success state on new edits
     useEffect(() => {
@@ -110,11 +137,15 @@ export const ExportPanel = () => {
         return { canvas, width, height };
     };
 
-    // --- GIF Export ---
+    // --- GIF Export (using SVG renderer + rasterization) ---
     const handleGifExport = async () => {
         if (!lottieData) return;
         setIsExporting(true);
         const toastId = toast.loading("Generating GIF...");
+
+        // Elements to cleanup
+        let container: HTMLDivElement | null = null;
+        let anim: any = null;
 
         try {
             // Check if gif.worker.js exists
@@ -124,29 +155,30 @@ export const ExportPanel = () => {
             }
 
             const { canvas, width, height } = setupHiddenCanvas(resolution)!;
+            const ctx = canvas.getContext('2d')!;
 
-            // Deep clone to prevent "Object not extensible" error since lottie-web mutates the input
+            // Deep clone to prevent mutation
             const animationDataClone = JSON.parse(JSON.stringify(lottieData));
 
-            const anim = lottie.loadAnimation({
-                container: document.createElement('div'), // wrapper
-                renderer: 'canvas',
+            // Create a visible container for SVG renderer (must be in DOM with dimensions)
+            container = document.createElement('div');
+            container.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${width}px;height:${height}px;overflow:hidden;pointer-events:none;`;
+            document.body.appendChild(container);
+
+            // Use SVG renderer (same as Player component - WORKS)
+            anim = lottie.loadAnimation({
+                container: container,
+                renderer: 'svg',  // SVG renderer works correctly!
                 loop: false,
                 autoplay: false,
                 animationData: animationDataClone,
-                rendererSettings: {
-                    context: canvas.getContext('2d')!,
-                    clearCanvas: false, // We clear manually
-                    preserveAspectRatio: 'xMidYMid meet'
-                }
             });
 
-            // Wait for load, including assets
+            // Wait for load
             await new Promise(resolve => {
                 if (anim.isLoaded) resolve(null);
                 else anim.addEventListener('DOMLoaded', resolve);
             });
-            // Extra safety wait for images if any
             await new Promise(r => setTimeout(r, 500));
 
             const gif = new GIF({
@@ -155,37 +187,79 @@ export const ExportPanel = () => {
                 width,
                 height,
                 workerScript: '/gif.worker.js',
-                background: '#ffffff' // Force white background for GIF
+                background: '#ffffff'
             });
 
             const totalFrames = anim.totalFrames;
-            const duration = totalFrames / anim.frameRate; // seconds
+            const duration = totalFrames / anim.frameRate;
             const totalOutputFrames = Math.floor(duration * fps);
-            const ctx = canvas.getContext('2d')!;
+
+            // Helper to rasterize SVG to canvas
+            const rasterizeSvgToCanvas = (): Promise<void> => {
+                return new Promise((resolve, reject) => {
+                    const svgElement = container!.querySelector('svg');
+                    if (!svgElement) {
+                        reject(new Error('SVG element not found'));
+                        return;
+                    }
+
+                    // Set SVG dimensions explicitly
+                    svgElement.setAttribute('width', String(width));
+                    svgElement.setAttribute('height', String(height));
+
+                    const svgString = new XMLSerializer().serializeToString(svgElement);
+                    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+
+                    const img = new Image();
+                    img.onload = () => {
+                        // Clear and draw white background
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
+                        // Draw the SVG
+                        ctx.drawImage(img, 0, 0, width, height);
+                        URL.revokeObjectURL(url);
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        reject(new Error('Failed to load SVG image'));
+                    };
+                    img.src = url;
+                });
+            };
 
             for (let i = 0; i < totalOutputFrames; i++) {
-                const time = i / fps; // Current time in seconds
-                // Convert to frame
+                const time = i / fps;
                 const frame = time * anim.frameRate;
 
-                // 1. Clear and Fill White Background
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, width, height);
-
-                // 2. Render Frame
+                // 1. Go to frame
                 anim.goToAndStop(frame, true);
+
+                // 2. Rasterize SVG to canvas
+                await rasterizeSvgToCanvas();
 
                 // 3. Add to GIF
                 gif.addFrame(canvas, { copy: true, delay: 1000 / fps });
 
+                // 4. Update progress (0-50% for rendering, 50-100% for encoding)
+                setExportProgress((i / totalOutputFrames) * 0.5);
+
                 // Allow UI to breathe
-                await new Promise(r => setTimeout(r, 0));
+                if (i % 5 === 0) {
+                    await new Promise(r => setTimeout(r, 0));
+                }
             }
+
+            // GIF.js handles the encoding phase - we'll set 50% here
+            setExportProgress(0.5);
 
             gif.on('finished', (blob) => {
                 downloadBlob(blob, `${fileName.replace('.json', '')}.gif`);
+                setExportProgress(1); // Set progress to 100%
                 setIsExporting(false);
-                anim.destroy();
+                if (anim) anim.destroy();
+                if (container && container.parentNode) container.parentNode.removeChild(container);
                 toast.dismiss(toastId);
                 toast.success("GIF exported successfully");
                 handleSuccess();
@@ -193,6 +267,8 @@ export const ExportPanel = () => {
 
             gif.on('abort', () => {
                 setIsExporting(false);
+                if (anim) anim.destroy();
+                if (container && container.parentNode) container.parentNode.removeChild(container);
                 toast.dismiss(toastId);
                 toast.error("GIF export aborted");
             });
@@ -201,114 +277,284 @@ export const ExportPanel = () => {
 
         } catch (e: any) {
             console.error("GIF Export Failed", e);
-            // Try to extract lottie web error
             const msg = e?.message || "Unknown error";
             setIsExporting(false);
+            if (anim) anim.destroy();
+            if (container && container.parentNode) container.parentNode.removeChild(container);
             toast.dismiss(toastId);
             toast.error(`GIF export failed: ${msg}`);
         }
     };
 
-    // --- Video Export ---
+    // --- FFmpeg Helper ---
+    const loadFfmpeg = async () => {
+        const ffmpeg = ffmpegRef;
+
+        // Use jsdelivr CDN (often faster than unpkg)
+        const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+
+        // Progress Listener for transcoding
+        ffmpeg.on('progress', ({ progress }) => {
+            // Progress during transcoding: map 0.5-1.0 (second half)
+            const mappedProgress = 0.5 + (progress * 0.5);
+            setExportProgress(Math.max(0.5, Math.min(1, mappedProgress)));
+        });
+
+        // Log for debugging
+        ffmpeg.on('log', ({ message }) => {
+            console.log('[FFmpeg]', message);
+        });
+
+        try {
+            setExportStatus("Downloading FFmpeg (first time only)...");
+
+            // Fetch with timeout for better error handling
+            const fetchWithTimeout = async (url: string, type: string, timeoutMs = 60000) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+                try {
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch ${url}: ${response.status}`);
+                    }
+
+                    const blob = await response.blob();
+                    return URL.createObjectURL(new Blob([blob], { type }));
+                } catch (e: any) {
+                    clearTimeout(timeoutId);
+                    if (e.name === 'AbortError') {
+                        throw new Error('FFmpeg download timed out. Please try again.');
+                    }
+                    throw e;
+                }
+            };
+
+            const coreURL = await fetchWithTimeout(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+            setExportStatus("Downloading FFmpeg WASM...");
+            const wasmURL = await fetchWithTimeout(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+
+            setExportStatus("Initializing FFmpeg...");
+            await ffmpeg.load({ coreURL, wasmURL });
+
+        } catch (error: any) {
+            console.error('FFmpeg load error:', error);
+            throw new Error(`Failed to load FFmpeg: ${error.message}`);
+        }
+    };
+
+    const transcodeWebmToMp4 = async (webmBlob: Blob): Promise<Blob> => {
+        const ffmpeg = ffmpegRef;
+        if (!ffmpeg.loaded) {
+            setExportStatus("Loading FFmpeg Core...");
+            await loadFfmpeg();
+        }
+
+        const inputName = 'input.webm';
+        const outputName = 'output.mp4';
+
+        setExportStatus("Writing file...");
+        await ffmpeg.writeFile(inputName, await fetchFile(webmBlob));
+
+        // Transcode
+        setExportStatus("Transcoding to MP4...");
+        // -c:v libx264 is standard. 
+        // -preset ultrafast for speed.
+        // -pix_fmt yuv420p for compatibility.
+        await ffmpeg.exec(['-i', inputName, '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', outputName]);
+
+        setExportStatus("Finalizing...");
+        const data = await ffmpeg.readFile(outputName);
+        return new Blob([(data as Uint8Array).buffer as ArrayBuffer], { type: 'video/mp4' });
+    };
+
+
+    // --- Video Export (WebM/MP4) - Using SVG renderer + rasterization ---
     const handleVideoExport = async () => {
         if (!lottieData) return;
         setIsExporting(true);
-        const toastId = toast.loading("Recording Video...");
+        setExportProgress(0);
+        setExportStatus("Initializing...");
+
+        // Elements to cleanup
+        let container: HTMLDivElement | null = null;
+        let anim: any = null;
 
         try {
-            const { canvas, width, height } = setupHiddenCanvas(resolution)!;
-            // We need to append canvas to DOM for CaptureStream to work reliably in some browsers, 
-            // but usually strictly hidden works for Chrome.
+            setExportStatus("Setting up Canvas...");
+            const videoScale = getVideoScale();
+            const { canvas, width, height } = setupHiddenCanvas(videoScale)!;
+            const ctx = canvas.getContext('2d')!;
 
-            // Deep clone to prevent "Object not extensible" error
+            // Deep clone
             const animationDataClone = JSON.parse(JSON.stringify(lottieData));
 
-            const anim = lottie.loadAnimation({
-                container: document.createElement('div'), // wrapper
-                renderer: 'canvas',
+            // Create container with proper dimensions for SVG renderer
+            container = document.createElement('div');
+            container.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${width}px;height:${height}px;overflow:hidden;pointer-events:none;`;
+            document.body.appendChild(container);
+
+            // Use SVG renderer (same as Player component - WORKS)
+            anim = lottie.loadAnimation({
+                container: container,
+                renderer: 'svg',  // SVG renderer works correctly!
                 loop: false,
                 autoplay: false,
                 animationData: animationDataClone,
-                rendererSettings: {
-                    context: canvas.getContext('2d')!,
-                    clearCanvas: false, // Lottie clears. 
-                    preserveAspectRatio: 'xMidYMid meet'
-                }
             });
 
+            setExportStatus("Loading Animation...");
             await new Promise(resolve => {
                 if (anim.isLoaded) resolve(null);
                 else anim.addEventListener('DOMLoaded', resolve);
             });
-            // Extra safety wait for images
             await new Promise(r => setTimeout(r, 500));
 
-            const stream = canvas.captureStream(fps);
-            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            setExportStatus("Rendering Frames...");
+
+            // Frame-by-frame rendering
+            const totalFrames = anim.totalFrames;
+            const duration = totalFrames / anim.frameRate;
+            const totalOutputFrames = Math.ceil(duration * fps);
+
+            // Helper to rasterize SVG to canvas
+            const rasterizeSvgToCanvas = (): Promise<void> => {
+                return new Promise((resolve, reject) => {
+                    const svgElement = container!.querySelector('svg');
+                    if (!svgElement) {
+                        reject(new Error('SVG element not found'));
+                        return;
+                    }
+
+                    svgElement.setAttribute('width', String(width));
+                    svgElement.setAttribute('height', String(height));
+
+                    const svgString = new XMLSerializer().serializeToString(svgElement);
+                    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+
+                    const img = new Image();
+                    img.onload = () => {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        URL.revokeObjectURL(url);
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        reject(new Error('Failed to load SVG image'));
+                    };
+                    img.src = url;
+                });
+            };
+
+            // Collect all frames as data URLs
+            const frames: string[] = [];
+
+            for (let i = 0; i < totalOutputFrames; i++) {
+                const time = i / fps;
+                const frame = time * anim.frameRate;
+
+                anim.goToAndStop(frame, true);
+                await rasterizeSvgToCanvas();
+
+                frames.push(canvas.toDataURL('image/webp', 0.95));
+
+                const progress = (i / totalOutputFrames) * 0.5;
+                setExportProgress(progress);
+
+                if (i % 5 === 0) {
+                    await new Promise(r => setTimeout(r, 0));
+                }
+            }
+
+            anim.destroy();
+            if (container && container.parentNode) container.parentNode.removeChild(container);
+            container = null;
+            anim = null;
+            setExportStatus("Encoding Video...");
+
+            // Use canvas-based video encoding with MediaRecorder
+            // Create a visible canvas temporarily for MediaRecorder to work
+            const videoCanvas = document.createElement('canvas');
+            videoCanvas.width = width;
+            videoCanvas.height = height;
+            // Make it visible but off-screen
+            videoCanvas.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1;';
+            document.body.appendChild(videoCanvas);
+            const videoCtx = videoCanvas.getContext('2d')!;
+
+            const stream = videoCanvas.captureStream(fps);
+            const recorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm',
+                videoBitsPerSecond: 2500000
+            });
             const chunks: Blob[] = [];
 
             recorder.ondataavailable = (e) => {
                 if (e.data.size > 0) chunks.push(e.data);
             };
 
-            recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'video/webm' });
-                downloadBlob(blob, `${fileName.replace('.json', '')}.webm`);
-                setIsExporting(false);
-                anim.destroy();
-
-                // Stop rendering loop
-                if (renderLoopId) cancelAnimationFrame(renderLoopId);
-
-                toast.dismiss(toastId);
-                toast.success("Video exported successfully");
-                handleSuccess();
-            };
-
-            // Custom Render Loop to ensure background
-            const ctx = canvas.getContext('2d')!;
-            let renderLoopId: number;
-
-            const renderLoop = () => {
-                // We can't easily intercept the internal lottie render loop but 
-                // we can try to fill background before next paint if valid.
-                // Actually, Lottie clears the canvas. 
-                // For video, 'clearCanvas: false' in settings might help if we fill white once,
-                // but lottie needs to clear previous frame.
-                // Best approach for video: Composite.
-                ctx.globalCompositeOperation = 'destination-over';
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, width, height);
-                ctx.globalCompositeOperation = 'source-over';
-
-                renderLoopId = requestAnimationFrame(renderLoop);
-            };
-            renderLoop(); // Start forcing background
-
-            recorder.onerror = (e) => {
-                console.error("Recorder Error", e);
-                toast.dismiss(toastId);
-                toast.error("Video recording failed");
-            }
+            const recordingComplete = new Promise<Blob>((resolve, reject) => {
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    resolve(blob);
+                };
+                recorder.onerror = (e) => reject(e);
+            });
 
             recorder.start();
 
-            // Play exactly duration
-            const durationInMs = (anim.totalFrames / anim.frameRate) * 1000;
-            anim.play(); // Realtime playback
+            // Draw each frame to the video canvas
+            const frameDelay = 1000 / fps;
+            for (let i = 0; i < frames.length; i++) {
+                // Load the frame image
+                const img = new Image();
+                await new Promise<void>((resolve, reject) => {
+                    img.onload = () => resolve();
+                    img.onerror = reject;
+                    img.src = frames[i];
+                });
 
-            // Wait
-            setTimeout(() => {
-                recorder.stop();
-                anim.stop();
-            }, durationInMs + 100); // 100ms buffer
+                // Draw to video canvas
+                videoCtx.drawImage(img, 0, 0);
+
+                // Update progress (50-100% for encoding phase)
+                const progress = 0.5 + (i / frames.length) * 0.5;
+                setExportProgress(progress);
+
+                // Wait for frame duration
+                await new Promise(r => setTimeout(r, frameDelay));
+            }
+
+            recorder.stop();
+            setExportStatus("Finalizing...");
+            const webmBlob = await recordingComplete;
+
+            // Cleanup
+            document.body.removeChild(videoCanvas);
+
+            if (videoFormat === 'webm') {
+                downloadBlob(webmBlob, `${fileName.replace('.json', '')}.webm`);
+                toast.success("WebM exported successfully");
+            } else {
+                const mp4Blob = await transcodeWebmToMp4(webmBlob);
+                downloadBlob(mp4Blob, `${fileName.replace('.json', '')}.mp4`);
+                toast.success("MP4 exported successfully");
+            }
+
+            setExportProgress(1);
+            handleSuccess();
 
         } catch (e: any) {
             console.error("Video Export Failed", e);
-            const msg = e?.message || "Unknown error";
+            toast.error(`Video export failed: ${e?.message || "Unknown error"}`);
+        } finally {
             setIsExporting(false);
-            toast.dismiss(toastId);
-            toast.error(`Video export failed: ${msg}`);
+            setExportStatus("Completed");
         }
     };
 
@@ -432,19 +678,36 @@ export const ExportPanel = () => {
                 {(activeTab === 'gif' || activeTab === 'video') && (
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label className="text-[10px] text-muted-foreground uppercase">Resolution</Label>
-                                <select
-                                    className="w-full text-xs h-8 bg-background border px-2 rounded-md"
-                                    value={resolution}
-                                    onChange={(e) => setResolution(parseFloat(e.target.value))}
-                                >
-                                    <option value={0.5}>0.5x</option>
-                                    <option value={1}>1x</option>
-                                    <option value={1.5}>1.5x</option>
-                                    <option value={2}>2x</option>
-                                </select>
-                            </div>
+                            {activeTab === 'gif' ? (
+                                <div className="space-y-1.5">
+                                    <Label className="text-[10px] text-muted-foreground uppercase">Resolution</Label>
+                                    <select
+                                        className="w-full text-xs h-8 bg-background border px-2 rounded-md"
+                                        value={resolution}
+                                        onChange={(e) => setResolution(parseFloat(e.target.value))}
+                                    >
+                                        <option value={0.5}>0.5x</option>
+                                        <option value={1}>1x</option>
+                                        <option value={1.5}>1.5x</option>
+                                        <option value={2}>2x</option>
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    <Label className="text-[10px] text-muted-foreground uppercase">Quality</Label>
+                                    <select
+                                        className="w-full text-xs h-8 bg-background border px-2 rounded-md"
+                                        value={videoQuality}
+                                        onChange={(e) => setVideoQuality(e.target.value as any)}
+                                    >
+                                        <option value="144p">144p (Fastest)</option>
+                                        <option value="360p">360p</option>
+                                        <option value="480p">480p</option>
+                                        <option value="720p">720p (HD)</option>
+                                        <option value="1080p">1080p (Full HD)</option>
+                                    </select>
+                                </div>
+                            )}
                             <div className="space-y-1.5">
                                 <Label className="text-[10px] text-muted-foreground uppercase">Framerate</Label>
                                 <select
@@ -459,6 +722,26 @@ export const ExportPanel = () => {
                             </div>
                         </div>
 
+                        {/* Format selector for video only */}
+                        {activeTab === 'video' && (
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] text-muted-foreground uppercase">Format</Label>
+                                <select
+                                    className="w-full text-xs h-8 bg-background border px-2 rounded-md"
+                                    value={videoFormat}
+                                    onChange={(e) => setVideoFormat(e.target.value as any)}
+                                >
+                                    <option value="webm">WebM (⚡ Fast - Recommended)</option>
+                                    <option value="mp4">MP4 (🐢 Slow - Better Compatibility)</option>
+                                </select>
+                                {videoFormat === 'mp4' && (
+                                    <p className="text-[9px] text-orange-500">
+                                        ⚠️ MP4 requires downloading ~30MB and slow transcoding
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
                         <Button
                             className="w-full"
                             onClick={activeTab === 'gif' ? handleGifExport : handleVideoExport}
@@ -469,7 +752,7 @@ export const ExportPanel = () => {
                             )}
                             {isExporting
                                 ? 'Processing...'
-                                : <>Export {activeTab.toUpperCase()} <span className="ml-1 opacity-60 text-[10px]">{getExportLabel()}</span></>
+                                : <>Export {activeTab === 'video' ? videoFormat.toUpperCase() : activeTab.toUpperCase()} <span className="ml-1 opacity-60 text-[10px]">{getExportLabel()}</span></>
                             }
                         </Button>
 

@@ -13,6 +13,8 @@ import { LandingPage } from './LandingPage';
 import { ModeToggle } from './mode-toggle';
 import { EmptyState } from './EmptyState';
 
+import { ExportProgress } from './ExportProgress'; // Import Progress Component
+
 export const MainLayout = () => {
     const lottie = useLottieStore((state) => state.lottie);
     const isEditorMode = useLottieStore((state) => state.isEditorMode);
@@ -112,6 +114,7 @@ export const MainLayout = () => {
                                     <>
                                         <Player />
                                         <Controls onCrop={() => setIsCropOpen(true)} />
+                                        <ExportProgress />
                                     </>
                                 ) : (
                                     <EmptyState />
