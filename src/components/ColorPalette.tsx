@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLottieStore } from '@/store/useLottieStore';
+import { useSelectionStore } from '@/store/useSelectionStore';
 import { extractColors, type ColorLocation, type ColorInstance } from '@/engine/colors';
 import { replaceColor, updateColorForInstance, updateGradientOffset } from '@/engine/transformer';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,11 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Palette, ChevronDown, ChevronUp, ChevronRight, Layers as LayerIcon, GripHorizontal } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AdvancedColorPicker } from '@/components/AdvancedColorPicker';
+import { cn } from '@/lib/utils';
 
 export const ColorPalette = () => {
     const lottie = useLottieStore((state) => state.lottie);
     const updateLottie = useLottieStore((state) => state.updateLottie);
     const commit = useLottieStore((state) => state.commit);
+
+    // Global selection state for cross-component highlighting
+    const selectedLayerIds = useSelectionStore((state) => state.selectedLayerIds);
+    const setHighlightedLayerIds = useSelectionStore((state) => state.setHighlightedLayerIds);
 
     // Track expansion by index instead of ID to prevent collapse on color change
     const [expandedItem, setExpandedItem] = useState<{ type: 'solid' | 'gradient', index: number } | null>(null);
@@ -27,6 +33,28 @@ export const ColorPalette = () => {
             gradients: allColors.filter(c => c.type === 'gradient')
         };
     }, [lottie]);
+
+    // Helper to check if a color belongs to any selected layer
+    const colorBelongsToSelectedLayer = (color: ColorInstance) => {
+        if (selectedLayerIds.length === 0) return false;
+        // Debug: Log what we're comparing with actual values
+        const locInfo = color.locations.map(loc => ({ layerInd: loc.layerInd, layerName: loc.layerName }));
+        console.log('Selected Layer IDs:', JSON.stringify(selectedLayerIds));
+        console.log('Color locations:', JSON.stringify(locInfo));
+        const match = color.locations.some(loc => selectedLayerIds.includes(loc.layerInd));
+        console.log('Match found:', match);
+        return match;
+    };
+
+    // Helper to highlight layers when hovering a color
+    const handleColorHover = (color: ColorInstance | null) => {
+        if (color) {
+            const layerIds = [...new Set(color.locations.map(loc => loc.layerInd))];
+            setHighlightedLayerIds(layerIds);
+        } else {
+            setHighlightedLayerIds([]);
+        }
+    };
 
     const handleGlobalUpdate = (oldHex: string, newHex: string) => {
         // Hex can be 6 or 8 digits
@@ -135,10 +163,22 @@ export const ColorPalette = () => {
 
                                 {sectionsExpanded.solids && solids.map((c, idx) => {
                                     const isExpanded = expandedItem?.type === 'solid' && expandedItem?.index === idx;
+                                    const belongsToSelectedLayer = colorBelongsToSelectedLayer(c);
                                     return (
-                                        <div key={idx} className="border rounded-lg shadow-sm bg-card overflow-hidden">
+                                        <div
+                                            key={idx}
+                                            className={cn(
+                                                "border rounded-lg shadow-sm bg-card overflow-hidden transition-all",
+                                                belongsToSelectedLayer && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background"
+                                            )}
+                                            onMouseEnter={() => handleColorHover(c)}
+                                            onMouseLeave={() => handleColorHover(null)}
+                                        >
                                             <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => toggleExpand('solid', idx)}>
-                                                <span className="text-xs font-medium">
+                                                <span className={cn(
+                                                    "text-xs font-medium",
+                                                    belongsToSelectedLayer && "text-amber-500"
+                                                )}>
                                                     {c.count > 1 ? `${c.count} Instances` : '1 Instance'}
                                                 </span>
                                                 <div className="flex items-center gap-2">
@@ -209,15 +249,27 @@ export const ColorPalette = () => {
                                 {sectionsExpanded.gradients && gradients.map((c, idx) => {
                                     const isExpanded = expandedItem?.type === 'gradient' && expandedItem?.index === idx;
                                     const gradientBackground = c.stops ? `linear-gradient(to right, ${c.stops.map(s => `${s.hex} ${s.offset * 100}%`).join(', ')}` : 'transparent';
+                                    const belongsToSelectedLayer = colorBelongsToSelectedLayer(c);
 
                                     return (
-                                        <div key={idx} className="border rounded-lg shadow-sm bg-card overflow-hidden">
+                                        <div
+                                            key={idx}
+                                            className={cn(
+                                                "border rounded-lg shadow-sm bg-card overflow-hidden transition-all",
+                                                belongsToSelectedLayer && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background"
+                                            )}
+                                            onMouseEnter={() => handleColorHover(c)}
+                                            onMouseLeave={() => handleColorHover(null)}
+                                        >
                                             <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => toggleExpand('gradient', idx)}>
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-6 text-muted-foreground">
                                                         <GripHorizontal className="size-4" />
                                                     </div>
-                                                    <span className="text-xs font-medium">
+                                                    <span className={cn(
+                                                        "text-xs font-medium",
+                                                        belongsToSelectedLayer && "text-amber-500"
+                                                    )}>
                                                         {c.count > 1 ? `Gradient Group (${c.count})` : c.locations[0]?.layerName || 'Gradient'}
                                                     </span>
                                                 </div>

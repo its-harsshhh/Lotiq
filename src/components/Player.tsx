@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import lottie, { type AnimationItem } from 'lottie-web';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
+import { useSelectionStore } from '@/store/useSelectionStore';
 import { Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +15,12 @@ export const Player = () => {
     const lottieData = useLottieStore((state) => state.lottie);
     const { isPlaying, speed, progress } = usePlaybackStore();
     const { setProgress, setFrame, setDuration } = usePlaybackStore();
+    const clearSelectedLayers = useSelectionStore((state) => state.clearSelectedLayers);
+
+    // Clear selection when clicking on canvas background
+    const handleCanvasClick = () => {
+        clearSelectedLayers();
+    };
 
 
     // 1. Initialize / Re-initialize Animation
@@ -97,7 +104,7 @@ export const Player = () => {
 
 
     return (
-        <div className="flex-1 relative bg-secondary/10 flex items-center justify-center overflow-hidden">
+        <div className="flex-1 relative bg-secondary/10 flex items-center justify-center overflow-hidden" onClick={handleCanvasClick}>
             {/* Mockup Toggle Button - Top Right */}
             <button
                 onClick={() => setShowMockup(!showMockup)}

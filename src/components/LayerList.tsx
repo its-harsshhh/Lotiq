@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLottieStore } from '@/store/useLottieStore';
+import { useSelectionStore } from '@/store/useSelectionStore';
 import { toggleLayerVisibility, deleteLayer, renameLayer, groupLayers } from '@/engine/transformer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -12,10 +13,14 @@ export const LayerList = () => {
     const lottie = useLottieStore((state) => state.lottie);
     const updateLottie = useLottieStore((state) => state.updateLottie);
 
-    // Editing & Selection State
+    // Global selection state for cross-component highlighting
+    const selectedLayerIds = useSelectionStore((state) => state.selectedLayerIds);
+    const setSelectedLayerIds = useSelectionStore((state) => state.setSelectedLayerIds);
+    const highlightedLayerIds = useSelectionStore((state) => state.highlightedLayerIds);
+
+    // Local editing state
     const [editingLayerId, setEditingLayerId] = useState<number | null>(null);
     const [tempName, setTempName] = useState("");
-    const [selectedLayerIds, setSelectedLayerIds] = useState<number[]>([]);
     const [isExpanded, setIsExpanded] = useState(true);
 
     if (!lottie) return null;
@@ -44,17 +49,16 @@ export const LayerList = () => {
                     .slice(start, end + 1)
                     .map(l => l.ind);
 
-                // Merge with existing if command key is also held, otherwise replace? 
-                // Standard behavior: Shift usually extends selection from anchor. 
-                // We'll just add to selection to be safe or replace if no cmd key? 
-                // Let's simpler: Union with current selection.
-                setSelectedLayerIds(prev => Array.from(new Set([...prev, ...rangeIds])));
+                // Union with current selection
+                setSelectedLayerIds(Array.from(new Set([...selectedLayerIds, ...rangeIds])));
             }
         } else if (e.metaKey || e.ctrlKey) {
             // Toggle selection
-            setSelectedLayerIds(prev =>
-                prev.includes(ind) ? prev.filter(id => id !== ind) : [...prev, ind]
-            );
+            if (selectedLayerIds.includes(ind)) {
+                setSelectedLayerIds(selectedLayerIds.filter(id => id !== ind));
+            } else {
+                setSelectedLayerIds([...selectedLayerIds, ind]);
+            }
             setLastSelectedInd(ind);
         } else {
             // Exclusive selection
@@ -147,6 +151,7 @@ export const LayerList = () => {
                     <div className="flex flex-col select-none">
                         {lottie.layers.map((layer) => {
                             const isSelected = selectedLayerIds.includes(layer.ind);
+                            const isHighlighted = highlightedLayerIds.includes(layer.ind);
                             const isGroup = layer.ty === 3; // Null layer acting as group
 
                             return (
@@ -154,8 +159,9 @@ export const LayerList = () => {
                                     key={layer.ind}
                                     onClick={(e) => handleSelect(layer.ind, e)}
                                     className={cn(
-                                        "flex items-center gap-3 p-3 text-sm border-b border-border/40 group transition-colors cursor-pointer",
+                                        "flex items-center gap-3 p-3 text-sm border-b border-border/40 group transition-all cursor-pointer",
                                         isSelected ? "bg-accent/80 text-accent-foreground" : "hover:bg-muted/50",
+                                        isHighlighted && !isSelected && "bg-amber-500/20 border-l-4 border-l-amber-500 animate-pulse",
                                         hasParent(layer) && "pl-8 border-l-4 border-l-transparent ml-2" // Indent
                                     )}
                                 >
