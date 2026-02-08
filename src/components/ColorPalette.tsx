@@ -6,7 +6,6 @@ import { replaceColor, updateColorForInstance, updateGradientOffset } from '@/en
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Palette, ChevronDown, ChevronUp, ChevronRight, Layers as LayerIcon, GripHorizontal } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AdvancedColorPicker } from '@/components/ui/advanced-color-picker';
 import { cn } from '@/lib/utils';
 
@@ -213,22 +212,15 @@ export const ColorPalette = () => {
                                                 </span>
                                                 <div className="flex items-center gap-2">
                                                     {/* Pill Component */}
-                                                    <div className="flex items-center gap-2 bg-muted/50 border rounded-full pl-3 pr-1 py-1 h-7">
-                                                        <span className="font-mono text-[10px] text-muted-foreground">{c.hex}</span>
-                                                        <Popover onOpenChange={(open) => !open && handleCommit()}>
-                                                            <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                                                <div className="size-5 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform" style={{ color: c.hex }} />
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0 border-none bg-transparent shadow-none" side="left" align="center">
-                                                                <AdvancedColorPicker
-                                                                    color={c.hex!}
-                                                                    onChange={(val) => handleGlobalUpdate(c.hex!, val)}
-                                                                    disableGradient
-                                                                    inline
-                                                                />
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                    </div>
+                                                    <AdvancedColorPicker
+                                                        color={c.hex!}
+                                                        onChange={(val) => handleGlobalUpdate(c.hex!, val)}
+                                                        disableGradient
+                                                        onOpenChange={(open) => !open && handleCommit()}
+                                                        className="h-7 w-auto border-0 bg-muted/50 rounded-full pl-1 pr-3 gap-2 flex-row-reverse min-w-[90px]"
+                                                    >
+                                                        <div className="size-5 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform shrink-0" style={{ color: c.hex }} />
+                                                    </AdvancedColorPicker>
                                                     <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
                                                         {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                                                     </Button>
@@ -248,22 +240,15 @@ export const ColorPalette = () => {
                                                                 <LayerIcon className="size-3 text-muted-foreground shrink-0" />
                                                                 <span className="truncate text-muted-foreground max-w-[120px]" title={loc.layerName}>{formatLayerName(loc)}</span>
                                                             </div>
-                                                            <div className="flex items-center gap-2 bg-muted/50 border rounded-full pl-3 pr-1 py-0.5 h-6">
-                                                                <span className="font-mono text-[10px] text-muted-foreground opacity-75">{c.hex}</span>
-                                                                <Popover onOpenChange={(open) => !open && handleCommit()}>
-                                                                    <PopoverTrigger asChild>
-                                                                        <div className="size-4 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform" style={{ color: c.hex }} />
-                                                                    </PopoverTrigger>
-                                                                    <PopoverContent className="w-auto p-0 border-none bg-transparent shadow-none" side="left" align="center">
-                                                                        <AdvancedColorPicker
-                                                                            color={c.hex!}
-                                                                            onChange={(val) => handleInstanceUpdate(loc, val)}
-                                                                            disableGradient
-                                                                            inline
-                                                                        />
-                                                                    </PopoverContent>
-                                                                </Popover>
-                                                            </div>
+                                                            <AdvancedColorPicker
+                                                                color={c.hex!}
+                                                                onChange={(val) => handleInstanceUpdate(loc, val)}
+                                                                disableGradient
+                                                                onOpenChange={(open) => !open && handleCommit()}
+                                                                className="h-6 w-auto border-0 bg-muted/50 rounded-full pl-1 pr-3 gap-2 flex-row-reverse min-w-[80px]"
+                                                            >
+                                                                <div className="size-4 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform shrink-0" style={{ color: c.hex }} />
+                                                            </AdvancedColorPicker>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -346,22 +331,15 @@ export const ColorPalette = () => {
                                                                 </div>
 
                                                                 {/* Color Pill */}
-                                                                <div className="flex items-center gap-2 bg-muted/50 border rounded-full pl-3 pr-1 py-1 h-7">
-                                                                    <span className="font-mono text-[10px] text-muted-foreground">{stop.hex}</span>
-                                                                    <Popover onOpenChange={(open) => !open && handleCommit()}>
-                                                                        <PopoverTrigger asChild>
-                                                                            <div className="size-5 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform" style={{ color: stop.hex }} />
-                                                                        </PopoverTrigger>
-                                                                        <PopoverContent className="w-auto p-0 border-none bg-transparent shadow-none" side="bottom" align="center">
-                                                                            <AdvancedColorPicker
-                                                                                color={stop.hex}
-                                                                                onChange={(val) => handleGradientStopUpdate(c, stop.index, val)}
-                                                                                disableGradient
-                                                                                inline
-                                                                            />
-                                                                        </PopoverContent>
-                                                                    </Popover>
-                                                                </div>
+                                                                <AdvancedColorPicker
+                                                                    color={stop.hex}
+                                                                    onChange={(val) => handleGradientStopUpdate(c, stop.index, val)}
+                                                                    disableGradient
+                                                                    onOpenChange={(open) => !open && handleCommit()}
+                                                                    className="h-7 w-auto border-0 bg-muted/50 rounded-full pl-1 pr-3 gap-2 flex-row-reverse min-w-[90px]"
+                                                                >
+                                                                    <div className="size-5 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform shrink-0" style={{ color: stop.hex }} />
+                                                                </AdvancedColorPicker>
                                                             </div>
                                                         </div>
                                                     ))}

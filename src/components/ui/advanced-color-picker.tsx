@@ -19,11 +19,13 @@ interface AdvancedColorPickerProps {
     className?: string; // Optional styling
     disableGradient?: boolean;
     inline?: boolean; // When true, renders picker content directly without trigger/popover wrapper
+    onOpenChange?: (open: boolean) => void;
+    children?: React.ReactNode; // Custom trigger content
 }
 
 type Mode = 'solid' | 'gradient';
 
-export const AdvancedColorPicker: React.FC<AdvancedColorPickerProps> = ({ value, color, onChange, className, disableGradient = false, inline = false }) => {
+export const AdvancedColorPicker: React.FC<AdvancedColorPickerProps> = ({ value, color, onChange, className, disableGradient = false, inline = false, onOpenChange, children }) => {
     // Handle prop alias
     const actualValue = value || color || '#ffffff';
 
@@ -131,32 +133,38 @@ export const AdvancedColorPicker: React.FC<AdvancedColorPickerProps> = ({ value,
         }
     };
 
-    // Handle Enter key to expand shorthand hex (e.g., FF -> FFFFFF, AB -> ABABAB)
+    // Handle Enter key to expand shorthand hex (e.g., F -> FFFFFF, AB -> ABABAB, 0 -> 000000)
     const handleHexKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent closing popover/submitting form
             let hex = hexInput.replace('#', '').toUpperCase();
+            let expandedHex = '';
 
-            // If 1 char, repeat 6 times (e.g., F -> FFFFFF)
+            // Handle "0" -> "000000", "F" -> "FFFFFF"
+            // Single char: repeat 6 times
             if (hex.length === 1 && /^[0-9A-F]$/.test(hex)) {
-                const expanded = hex.repeat(6);
-                const fullHex = '#' + expanded;
-                setHexInput(fullHex);
-                const c = colord(fullHex);
-                if (c.isValid()) {
-                    setSolidColor(c.toHex());
-                    emitSolid(c.toHex(), opacity);
-                }
+                expandedHex = hex.repeat(6);
             }
-            // If 2 chars, repeat 3 times (e.g., FF -> FFFFFF, AB -> ABABAB)
+            // Two chars: repeat 3 times (e.g., 00 -> 000000, FF -> FFFFFF)
             else if (hex.length === 2 && /^[0-9A-F]+$/.test(hex)) {
-                const expanded = hex.repeat(3);
-                const fullHex = '#' + expanded;
+                expandedHex = hex.repeat(3);
+            }
+            // Valid 3 or 6 char hex: use as-is
+            else if ((hex.length === 3 || hex.length === 6) && /^[0-9A-F]+$/.test(hex)) {
+                expandedHex = hex.length === 3 ? hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2] : hex;
+            }
+
+            if (expandedHex) {
+                const fullHex = '#' + expandedHex;
                 setHexInput(fullHex);
                 const c = colord(fullHex);
                 if (c.isValid()) {
                     setSolidColor(c.toHex());
                     emitSolid(c.toHex(), opacity);
                 }
+                // Removed setPopoverOpen(false) so it stays open
+                // Optionally blur to indicate "done" typing
+                (e.target as HTMLInputElement).blur();
             }
         }
     };
@@ -239,23 +247,33 @@ export const AdvancedColorPicker: React.FC<AdvancedColorPickerProps> = ({ value,
             )}
         >
             {/* Color Swatch - Opens Popover */}
-            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <Popover
+                open={popoverOpen}
+                onOpenChange={(open) => {
+                    setPopoverOpen(open);
+                    onOpenChange?.(open);
+                }}
+            >
                 <PopoverTrigger asChild>
-                    <div className="w-6 h-6 rounded border shadow-sm shrink-0 relative overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
-                        <div className="absolute inset-0 z-0 opacity-100"
-                            style={{
-                                backgroundImage: `
+                    {children ? (
+                        children
+                    ) : (
+                        <div className="w-6 h-6 rounded border shadow-sm shrink-0 relative overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
+                            <div className="absolute inset-0 z-0 opacity-100"
+                                style={{
+                                    backgroundImage: `
                                 linear-gradient(45deg, #ccc 25%, transparent 25%), 
                                 linear-gradient(-45deg, #ccc 25%, transparent 25%), 
                                 linear-gradient(45deg, transparent 75%, #ccc 75%), 
                                 linear-gradient(-45deg, transparent 75%, #ccc 75%)
                               `,
-                                backgroundSize: '8px 8px',
-                                backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px'
-                            }}
-                        />
-                        <div className="absolute inset-0 z-10" style={{ background: actualValue }} />
-                    </div>
+                                    backgroundSize: '8px 8px',
+                                    backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px'
+                                }}
+                            />
+                            <div className="absolute inset-0 z-10" style={{ background: actualValue }} />
+                        </div>
+                    )}
                 </PopoverTrigger>
 
                 <PopoverContent className="w-64 p-3" align="start" sideOffset={5}>
