@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { useSelectionStore } from '@/store/useSelectionStore';
-import { toggleLayerVisibility, deleteLayer, renameLayer, groupLayers } from '@/engine/transformer';
+import { toggleLayerVisibility, deleteLayer, renameLayer, groupLayers, ungroupLayer } from '@/engine/transformer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,6 +121,8 @@ export const LayerList = () => {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; layerInd: number } | null>(null);
     const [lastSelectedInd, setLastSelectedInd] = useState<number | null>(null);
     const [deleteLayerId, setDeleteLayerId] = useState<number | null>(null);
+    const [isGrouping, setIsGrouping] = useState(false);
+    const [newGroupName, setNewGroupName] = useState("Group 1");
 
     // Build layer hierarchy - find which layers are children of which
     const { layerDepthMap, layersWithChildren } = useMemo(() => {
@@ -262,18 +264,26 @@ export const LayerList = () => {
 
     const handleGroup = () => {
         if (selectedLayerIds.length > 0) {
-            const name = prompt("Enter group name:", "New Group");
-            if (name) {
-                updateLottie((draft) => {
-                    groupLayers(draft, selectedLayerIds, name);
-                });
-                setSelectedLayerIds([]);
-            }
+            setNewGroupName("Group 1");
+            setIsGrouping(true);
+        }
+    };
+
+    const confirmGroup = () => {
+        if (newGroupName.trim()) {
+            updateLottie((draft) => {
+                groupLayers(draft, selectedLayerIds, newGroupName.trim());
+            });
+            setSelectedLayerIds([]);
+            setIsGrouping(false);
+            setNewGroupName("Group 1");
         }
     };
 
     const handleUngroup = (layerInd: number) => {
-        console.log('Ungroup layer:', layerInd);
+        updateLottie((draft) => {
+            ungroupLayer(draft, layerInd);
+        });
     };
 
     // Global Shortcuts
@@ -281,7 +291,20 @@ export const LayerList = () => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'g') {
                 e.preventDefault();
-                handleGroup();
+                if (e.shiftKey) {
+                    // Ungroup selected layer if it's a group
+                    // We need to know which layer is selected and if it is a group.
+                    // For simplicity, if one group layer is selected, ungroup it.
+                    if (selectedLayerIds.length === 1) {
+                        // We need access to layer data to check if it is a group, or just try to ungroup.
+                        // Since we are inside useEffect, we might not have fresh lottie state unless it's in dependency.
+                        // But updateLottie handles the state update. We just need to trigger it.
+                        // However, handleUngroup takes layerInd.
+                        handleUngroup(selectedLayerIds[0]);
+                    }
+                } else {
+                    handleGroup();
+                }
             }
         };
         window.addEventListener('keydown', handleGlobalKeyDown);
@@ -474,6 +497,33 @@ export const LayerList = () => {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setDeleteLayerId(null)}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Group Creation Dialog */}
+            <Dialog open={isGrouping} onOpenChange={setIsGrouping}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Group Layers</DialogTitle>
+                        <DialogDescription>
+                            Enter a name for the new group.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-2">
+                        <Input
+                            autoFocus
+                            placeholder="Group Name"
+                            value={newGroupName}
+                            onChange={(e) => setNewGroupName(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') confirmGroup();
+                            }}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsGrouping(false)}>Cancel</Button>
+                        <Button onClick={confirmGroup}>Create Group</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

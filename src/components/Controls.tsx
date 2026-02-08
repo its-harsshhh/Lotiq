@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { usePlaybackStore } from "@/store/usePlaybackStore";
-import { Play, Pause, Crop } from "lucide-react";
+import { useLottieStore } from "@/store/useLottieStore";
+import { Play, Pause, Crop, Smartphone } from "lucide-react";
 
 interface ControlsProps {
     onCrop?: () => void;
@@ -59,6 +60,9 @@ export const Controls = ({ onCrop }: ControlsProps) => {
                         <Crop className="h-4 w-4" />
                     </Button>
                 )}
+                <Button variant="ghost" size="icon" onClick={() => useLottieStore.getState().setSocialModalOpen(true)} title="Social Post">
+                    <Smartphone className="h-4 w-4" />
+                </Button>
             </div>
         </div>
     );

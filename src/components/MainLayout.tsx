@@ -13,6 +13,7 @@ import { ResizableLayout } from './ui/ResizableLayout';
 import { LandingPage } from './LandingPage';
 import { ModeToggle } from './mode-toggle';
 import { EmptyState } from './EmptyState';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { ExportProgress } from './ExportProgress'; // Import Progress Component
 
@@ -24,8 +25,11 @@ export const MainLayout = () => {
     const undo = useLottieStore((state) => state.undo);
     const redo = useLottieStore((state) => state.redo);
     const renameLottie = useLottieStore((state) => state.renameLottie);
+    const hasExportedThisSession = useLottieStore((state) => state.hasExportedThisSession);
+    const history = useLottieStore((state) => state.history);
     const [isCropOpen, setIsCropOpen] = useState(false);
     const [editingName, setEditingName] = useState<string | null>(null);
+    const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
     useEffect(() => {
         if (fileName && editingName === null) {
@@ -90,7 +94,19 @@ export const MainLayout = () => {
         return (
             <div className="h-screen w-full flex flex-col">
                 <header className="border-b h-14 flex items-center px-4 justify-between bg-card z-20 relative">
-                    <div className="font-bold text-xl tracking-tight">Lotiq</div>
+                    <div
+                        className="font-bold text-xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => {
+                            const hasEdits = history.length > 1;
+                            if (hasEdits && !hasExportedThisSession) {
+                                setShowCloseConfirm(true);
+                            } else {
+                                window.location.reload();
+                            }
+                        }}
+                    >
+                        Lotiq
+                    </div>
                     <label className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold text-sm group flex items-center gap-2 cursor-pointer">
                         <input
                             className="bg-transparent text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 min-w-[100px] hover:bg-muted/50 transition-colors"
@@ -103,9 +119,43 @@ export const MainLayout = () => {
                     </label>
                     <div className="flex items-center gap-2">
                         <ModeToggle />
-                        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Close</Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                // Check if there are unsaved changes
+                                // Logic: If history has more than 1 item (initial state) AND we haven't exported since last change
+                                // Actually simplistic: if we have history > 1 (meaning edits happened) and !hasExportedThisSession
+                                // But hasExportedThisSession resets on edit. So if !hasExportedThisSession, we might have unsaved changes.
+                                // But we need to distinguish "Active Session with Edits" vs "Just Loaded".
+                                // If history.length > 1, we definitely edited.
+                                const hasEdits = history.length > 1;
+                                if (hasEdits && !hasExportedThisSession) {
+                                    setShowCloseConfirm(true);
+                                } else {
+                                    window.location.reload();
+                                }
+                            }}
+                        >
+                            Close
+                        </Button>
                     </div>
                 </header>
+
+                <Dialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Unexported Changes</DialogTitle>
+                            <DialogDescription>
+                                You haven't exported your latest changes. Since there are no accounts, your work won't be saved if you leave. Are you sure you want to exit?
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setShowCloseConfirm(false)}>Cancel</Button>
+                            <Button variant="destructive" onClick={() => window.location.reload()}>Close Anyway</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
                 <div className="flex-1 min-h-0 overflow-hidden">
                     <ResizableLayout

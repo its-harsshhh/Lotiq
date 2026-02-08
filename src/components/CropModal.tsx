@@ -106,8 +106,8 @@ export const CropModal = ({ open, onClose }: CropModalProps) => {
 
     // Render Lottie Logic
     useEffect(() => {
-        // Only run if open and container is ready
-        if (!open || !containerRef.current || !lottieData) return;
+        // Only run if open and lottieData exists
+        if (!open || !lottieData) return;
 
         // Cleanup function to destroy previous instance
         const cleanup = () => {
@@ -117,24 +117,32 @@ export const CropModal = ({ open, onClose }: CropModalProps) => {
             }
         };
 
-        cleanup();
+        // Delay to ensure Dialog DOM is ready
+        const timer = setTimeout(() => {
+            if (!containerRef.current) return;
 
-        const dataToPlay = viewMode === 'preview' ? croppedJson : lottieData;
-        if (!dataToPlay) return;
+            cleanup();
 
-        try {
-            animRef.current = lottie.loadAnimation({
-                container: containerRef.current,
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                animationData: JSON.parse(JSON.stringify(dataToPlay))
-            });
-        } catch (e) {
-            console.error("Lottie load failed", e);
-        }
+            const dataToPlay = viewMode === 'preview' ? croppedJson : lottieData;
+            if (!dataToPlay) return;
 
-        return cleanup;
+            try {
+                animRef.current = lottie.loadAnimation({
+                    container: containerRef.current,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    animationData: JSON.parse(JSON.stringify(dataToPlay))
+                });
+            } catch (e) {
+                console.error("Lottie load failed", e);
+            }
+        }, 100);
+
+        return () => {
+            clearTimeout(timer);
+            cleanup();
+        };
     }, [open, viewMode, croppedJson, lottieData, containerSize]);
 
 
@@ -388,7 +396,7 @@ export const CropModal = ({ open, onClose }: CropModalProps) => {
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-zinc-950/95 border-zinc-800">
+            <DialogContent className="dark max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-zinc-950/95 border-zinc-800 text-zinc-100">
                 <DialogHeader className="flex-row items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50">
                     <DialogTitle className="flex items-center gap-2 text-zinc-100">
                         <span>Crop Animation</span>

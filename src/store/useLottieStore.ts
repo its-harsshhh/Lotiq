@@ -28,6 +28,27 @@ interface LottieState {
     exportProgress: number; // 0 to 1
     exportStatus: string;
 
+    // Social Settings State
+    socialSettings: {
+        enabled: boolean;
+        preset: 'square' | 'portrait' | 'vertical';
+        resolution: '720p' | '1080p' | '4k';
+        bgColor: string;
+        padding: number;
+        fps: 24 | 30 | 60;
+        format: 'webm' | 'mp4';
+    };
+    setSocialSettings: (settings: Partial<LottieState['socialSettings']>) => void;
+    toggleSocialPreview: () => void;
+
+    // Social Export Modal State
+    isSocialModalOpen: boolean;
+    setSocialModalOpen: (open: boolean) => void;
+
+    // Device Preview State
+    devicePreviewEnabled: boolean;
+    toggleDevicePreview: () => void;
+
     // Actions
     setLottie: (data: LottieJSON | null) => void;
     setFileName: (name: string) => void;
@@ -202,6 +223,7 @@ export const useLottieStore = create<LottieState>((set, get) => {
 
                 // Update Workspace
                 state.lottie = nextLottie;
+                state.hasExportedThisSession = false; // Reset export status on change
 
                 // Update History
                 if (!skipHistory) {
@@ -297,5 +319,40 @@ export const useLottieStore = create<LottieState>((set, get) => {
         setIsExporting: (isExporting) => set({ isExporting }),
         setExportProgress: (exportProgress) => set({ exportProgress }),
         setExportStatus: (exportStatus) => set({ exportStatus }),
+
+        // Social Preview State
+        socialSettings: {
+            enabled: false,
+            preset: 'portrait',
+            resolution: '1080p',
+            bgColor: '#F3F4F6',
+            padding: 20,
+            fps: 30,
+            format: 'webm'
+        },
+        setSocialSettings: (settings) => set(produce((state: LottieState) => {
+            state.socialSettings = { ...state.socialSettings, ...settings };
+        })),
+        toggleSocialPreview: () => set(produce((state: LottieState) => {
+            state.socialSettings.enabled = !state.socialSettings.enabled;
+            // Mutually exclusive
+            if (state.socialSettings.enabled) {
+                state.devicePreviewEnabled = false;
+            }
+        })),
+
+        // Device Preview State
+        devicePreviewEnabled: false,
+        toggleDevicePreview: () => set(produce((state: LottieState) => {
+            state.devicePreviewEnabled = !state.devicePreviewEnabled;
+            // Mutually exclusive
+            if (state.devicePreviewEnabled) {
+                state.socialSettings.enabled = false;
+            }
+        })),
+
+        // Social Export Modal
+        isSocialModalOpen: false,
+        setSocialModalOpen: (open) => set({ isSocialModalOpen: open }),
     };
 });

@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Palette, ChevronDown, ChevronUp, ChevronRight, Layers as LayerIcon, GripHorizontal } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { AdvancedColorPicker } from '@/components/AdvancedColorPicker';
+import { AdvancedColorPicker } from '@/components/ui/advanced-color-picker';
 import { cn } from '@/lib/utils';
 
 export const ColorPalette = () => {
@@ -37,13 +37,7 @@ export const ColorPalette = () => {
     // Helper to check if a color belongs to any selected layer
     const colorBelongsToSelectedLayer = (color: ColorInstance) => {
         if (selectedLayerIds.length === 0) return false;
-        // Debug: Log what we're comparing with actual values
-        const locInfo = color.locations.map(loc => ({ layerInd: loc.layerInd, layerName: loc.layerName }));
-        console.log('Selected Layer IDs:', JSON.stringify(selectedLayerIds));
-        console.log('Color locations:', JSON.stringify(locInfo));
-        const match = color.locations.some(loc => selectedLayerIds.includes(loc.layerInd));
-        console.log('Match found:', match);
-        return match;
+        return color.locations.some(loc => selectedLayerIds.includes(loc.layerInd));
     };
 
     // Helper to highlight layers when hovering a color
@@ -54,6 +48,42 @@ export const ColorPalette = () => {
         } else {
             setHighlightedLayerIds([]);
         }
+    };
+
+    // Helper to highlight a single layer when hovering a specific location
+    const handleLocationHover = (loc: ColorLocation | null) => {
+        if (loc) {
+            setHighlightedLayerIds([loc.layerInd]);
+        } else {
+            setHighlightedLayerIds([]);
+        }
+    };
+
+    // Helper to format layer names - differentiate between main comp and nested precomp layers
+    const formatLayerName = (loc: ColorLocation): string => {
+        const name = loc.layerName;
+        const isNested = !!loc.assetId; // Has assetId means it's inside a precomp
+
+        // Check if it's a generic "Layer X" name
+        const layerMatch = name.match(/^Layer\s*(\d+)$/i);
+
+        if (layerMatch) {
+            if (isNested) {
+                // For precomp layers with generic names, don't show confusing numbers
+                return 'Nested Shape';
+            }
+            // For main comp layers, keep the layer number
+            return `Layer ${layerMatch[1]}`;
+        }
+
+        // If it has a meaningful name, use it
+        if (isNested) {
+            // Indicate it's nested for context
+            const truncated = name.length > 18 ? name.substring(0, 16) + '…' : name;
+            return `↳ ${truncated}`;
+        }
+
+        return name.length > 24 ? name.substring(0, 22) + '…' : name;
     };
 
     const handleGlobalUpdate = (oldHex: string, newHex: string) => {
@@ -193,6 +223,8 @@ export const ColorPalette = () => {
                                                                 <AdvancedColorPicker
                                                                     color={c.hex!}
                                                                     onChange={(val) => handleGlobalUpdate(c.hex!, val)}
+                                                                    disableGradient
+                                                                    inline
                                                                 />
                                                             </PopoverContent>
                                                         </Popover>
@@ -206,10 +238,15 @@ export const ColorPalette = () => {
                                             {isExpanded && (
                                                 <div className="bg-muted/10 border-t">
                                                     {c.locations.map((loc, locIdx) => (
-                                                        <div key={`${loc.layerInd}-${locIdx}`} className="flex items-center justify-between px-3 py-2 text-xs border-b last:border-0 hover:bg-muted/20">
+                                                        <div
+                                                            key={`${loc.layerInd}-${locIdx}`}
+                                                            className="flex items-center justify-between px-3 py-2 text-xs border-b last:border-0 hover:bg-muted/20 cursor-pointer transition-colors"
+                                                            onMouseEnter={() => handleLocationHover(loc)}
+                                                            onMouseLeave={() => handleLocationHover(null)}
+                                                        >
                                                             <div className="flex items-center gap-2">
                                                                 <LayerIcon className="size-3 text-muted-foreground shrink-0" />
-                                                                <span className="truncate text-muted-foreground max-w-[120px]">{loc.layerName}</span>
+                                                                <span className="truncate text-muted-foreground max-w-[120px]" title={loc.layerName}>{formatLayerName(loc)}</span>
                                                             </div>
                                                             <div className="flex items-center gap-2 bg-muted/50 border rounded-full pl-3 pr-1 py-0.5 h-6">
                                                                 <span className="font-mono text-[10px] text-muted-foreground opacity-75">{c.hex}</span>
@@ -221,6 +258,8 @@ export const ColorPalette = () => {
                                                                         <AdvancedColorPicker
                                                                             color={c.hex!}
                                                                             onChange={(val) => handleInstanceUpdate(loc, val)}
+                                                                            disableGradient
+                                                                            inline
                                                                         />
                                                                     </PopoverContent>
                                                                 </Popover>
@@ -317,6 +356,8 @@ export const ColorPalette = () => {
                                                                             <AdvancedColorPicker
                                                                                 color={stop.hex}
                                                                                 onChange={(val) => handleGradientStopUpdate(c, stop.index, val)}
+                                                                                disableGradient
+                                                                                inline
                                                                             />
                                                                         </PopoverContent>
                                                                     </Popover>

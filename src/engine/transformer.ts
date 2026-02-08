@@ -443,3 +443,30 @@ export const groupLayers = (draft: LottieJSON, selectedInds: number[], groupName
         }
     });
 };
+
+/**
+ * Ungroups a layer (removes the Null layer and unparents children).
+ */
+export const ungroupLayer = (draft: LottieJSON, groupLayerInd: number) => {
+    // 1. Find the group layer in the array
+    const groupLayerIdx = draft.layers.findIndex(l => l.ind === groupLayerInd);
+    if (groupLayerIdx === -1) return;
+
+    const groupLayer = draft.layers[groupLayerIdx];
+    const originalParentId = groupLayer.parent;
+
+    // 2. Find all children of this group
+    const children = draft.layers.filter(l => l.parent === groupLayerInd);
+
+    // 3. Reparent children to the group's parent (or remove parent if root)
+    children.forEach(child => {
+        if (originalParentId !== undefined) {
+            child.parent = originalParentId;
+        } else {
+            delete child.parent;
+        }
+    });
+
+    // 4. Remove the group layer
+    draft.layers.splice(groupLayerIdx, 1);
+};

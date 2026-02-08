@@ -1,6 +1,5 @@
-
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, Coffee } from 'lucide-react';
 
 interface ExportSuccessSupportProps {
     showSupport?: boolean;
@@ -21,7 +20,7 @@ export const ExportSuccessSupport = ({ showSupport = true }: ExportSuccessSuppor
                     <div className="h-px bg-border my-3" />
 
                     {/* Secondary Support Block */}
-                    <div className="space-y-3 px-1">
+                    <div className="space-y-3 px-1 pb-4">
                         <div className="space-y-1">
                             <p className="text-xs text-muted-foreground">
                                 Saved you a few minutes?
@@ -33,12 +32,12 @@ export const ExportSuccessSupport = ({ showSupport = true }: ExportSuccessSuppor
 
                         <Button
                             size="sm"
-                            variant="outline"
-                            className="w-full h-8 text-xs gap-2 text-muted-foreground hover:text-foreground"
+                            className="w-full h-9 text-xs gap-2 bg-[#FFDD00] text-black hover:bg-[#FFDD00]/90 font-bold border-0"
                             onClick={() => {
                                 window.open('https://buymeacoffee.com/harshpal', '_blank');
                             }}
                         >
+                            <Coffee className="size-3.5" />
                             Buy me a coffee
                         </Button>
                     </div>
