@@ -10,15 +10,13 @@ import { fetchFile } from '@ffmpeg/util';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-import { ChevronDown, ChevronRight, FileJson, Film, Image as ImageIcon, Loader2, Package, Upload } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileJson, Film, Image as ImageIcon, Loader2, Package } from 'lucide-react';
 import { ExportSuccessSupport } from './ExportSuccessSupport';
 import { SocialExportModal } from './SocialExportModal';
 
 export const ExportPanel = () => {
     const lottieData = useLottieStore((state) => state.lottie);
     const fileName = useLottieStore((state) => state.fileName);
-    const hasExportedThisSession = useLottieStore((state) => state.hasExportedThisSession);
-    const markExported = useLottieStore((state) => state.markExported);
 
     const isExporting = useLottieStore((state) => state.isExporting);
     const setIsExporting = useLottieStore((state) => state.setIsExporting);
