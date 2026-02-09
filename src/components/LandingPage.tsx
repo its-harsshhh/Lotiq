@@ -43,7 +43,7 @@ export const LandingPage = () => {
                     className="text-center space-y-6 max-w-2xl mx-auto mb-10"
                 >
                     <div className="inline-flex items-center rounded-full border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-3 py-1 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 mb-2 tracking-wide uppercase" role="status">
-                        v2.0 Beta · Runs entirely in your browser
+                        v2.0 Beta · Tweak, Crop, and Export in seconds
                     </div>
 
                     <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.1]">
@@ -257,7 +257,7 @@ export const LandingPage = () => {
                     className="w-full max-w-lg p-10 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 text-center space-y-4 mb-12 shadow-sm"
                 >
                     <p className="text-zinc-600 dark:text-zinc-400 italic font-medium leading-relaxed">
-                        "Built by a product designer who was tired of reopening After Effects for tiny Lottie fixes."
+                        "Finally, a way to fix small animation tweaks without bothering your motion designer."
                     </p>
                     <div className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">— Harsh</div>
                 </motion.div>
@@ -272,7 +272,7 @@ export const LandingPage = () => {
                     variants={fadeInUp}
                     className="text-center space-y-6 mb-32"
                 >
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
                         Lotiq is free to use. If it saves you time, you can support it with a coffee ☕
                     </p>
                     <a href="https://buymeacoffee.com/harshpal" target="_blank" rel="noreferrer">
