@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Coffee } from 'lucide-react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
 
@@ -118,6 +118,16 @@ export const MainLayout = () => {
                         <Pencil className="size-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </label>
                     <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            className="h-9 text-xs gap-2 bg-[#FFDD00] text-black hover:bg-[#FFDD00]/90 font-bold border-0 hidden sm:flex"
+                            onClick={() => {
+                                window.open('https://buymeacoffee.com/harshpal', '_blank');
+                            }}
+                        >
+                            <Coffee className="size-3.5" />
+                            Buy me a coffee
+                        </Button>
                         <ModeToggle />
                         <Button
                             variant="outline"
