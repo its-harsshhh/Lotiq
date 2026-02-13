@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -37,6 +37,17 @@ export const ExportPanel = () => {
 
     // --- Social / Mockup State (via Store) ---
     const socialSettings = useLottieStore((state) => state.socialSettings);
+
+    // --- Recommendation State ---
+    const [showWebmRecommendation, setShowWebmRecommendation] = useState(false);
+    const forceWebmRef = useRef<boolean>(false);
+    const isExportingRef = useRef<boolean>(false);
+    const switchToWebmSignal = useRef<(() => void) | null>(null);
+
+    // Sync state to ref for async timers
+    useEffect(() => {
+        isExportingRef.current = isExporting;
+    }, [isExporting]);
 
 
     const {
@@ -317,60 +328,51 @@ export const ExportPanel = () => {
     // --- FFmpeg Helper ---
     const loadFfmpeg = async () => {
         const ffmpeg = ffmpegRef;
+        if (ffmpeg.loaded) return;
 
-        // Use jsdelivr CDN (often faster than unpkg)
+        // Use jsdelivr CDN
         const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
 
-        // Progress Listener for transcoding
         ffmpeg.on('progress', ({ progress }) => {
-            // Progress during transcoding: map 0.5-1.0 (second half)
             const mappedProgress = 0.5 + (progress * 0.5);
             setExportProgress(Math.max(0.5, Math.min(1, mappedProgress)));
         });
 
-        // Log for debugging
         ffmpeg.on('log', ({ message }) => {
             console.log('[FFmpeg]', message);
         });
 
         try {
-            setExportStatus("Downloading FFmpeg (first time only)...");
+            setExportStatus("Loading FFmpeg Core...");
 
-            // Fetch with timeout for better error handling
-            const fetchWithTimeout = async (url: string, type: string, timeoutMs = 60000) => {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            // Pass direct URLs to avoid Blob/CSP issues with imports
+            const coreURL = `${baseURL}/ffmpeg-core.js`;
+            const wasmURL = `${baseURL}/ffmpeg-core.wasm`;
 
-                try {
-                    const response = await fetch(url, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch ${url}: ${response.status}`);
-                    }
-
-                    const blob = await response.blob();
-                    return URL.createObjectURL(new Blob([blob], { type }));
-                } catch (e: any) {
-                    clearTimeout(timeoutId);
-                    if (e.name === 'AbortError') {
-                        throw new Error('FFmpeg download timed out. Please try again.');
-                    }
-                    throw e;
-                }
-            };
-
-            const coreURL = await fetchWithTimeout(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
-            setExportStatus("Downloading FFmpeg WASM...");
-            const wasmURL = await fetchWithTimeout(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+            if (!window.crossOriginIsolated) {
+                // If not isolated, this will likely fail for 0.12.x unless single-thread is used, 
+                // but passing direct URLs allows the loader to try its best.
+                console.warn("SharedArrayBuffer is not available. This is required for FFmpeg 0.12+ multi-threading.");
+            }
 
             setExportStatus("Initializing FFmpeg...");
-            await ffmpeg.load({ coreURL, wasmURL });
+            // Use a short timeout race to catch hanging
+            const loadPromise = ffmpeg.load({
+                coreURL,
+                wasmURL
+            });
+
+            // 30s timeout
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("FFmpeg initialization timed out (30s)")), 30000)
+            );
+
+            await Promise.race([loadPromise, timeoutPromise]);
 
         } catch (error: any) {
             console.error('FFmpeg load error:', error);
             const msg = error instanceof Error ? error.message : (typeof error === 'string' ? error : JSON.stringify(error));
-            throw new Error(`Failed to load FFmpeg: ${msg}`);
+            throw new Error(`Failed to load FFmpeg: ${msg}. MP4 export requires a secure context (https) and specific server headers (COOP/COEP). Try WebM instead.`);
         }
     };
 
@@ -407,6 +409,20 @@ export const ExportPanel = () => {
         setIsExporting(true);
         setExportProgress(0);
         setExportStatus("Initializing...");
+
+        // Reset recommendation state
+        setShowWebmRecommendation(false);
+        forceWebmRef.current = false;
+
+        // Timeout check for MP4 slowness
+        let slowCheckTimer: NodeJS.Timeout | null = null;
+        if (videoFormat === 'mp4') {
+            slowCheckTimer = setTimeout(() => {
+                if (isExportingRef.current && !forceWebmRef.current) {
+                    setShowWebmRecommendation(true);
+                }
+            }, 5000);
+        }
 
         // Elements to cleanup
         let container: HTMLDivElement | null = null;
@@ -490,6 +506,9 @@ export const ExportPanel = () => {
             const frames: string[] = [];
 
             for (let i = 0; i < totalOutputFrames; i++) {
+                // Allows us to confirm cancellation if needed, though mostly we just swap format at end
+                if (!isExportingRef.current) throw new Error("Export cancelled");
+
                 const time = i / fps;
                 const frame = time * anim.frameRate;
 
@@ -510,7 +529,7 @@ export const ExportPanel = () => {
             if (container && container.parentNode) container.parentNode.removeChild(container);
             container = null;
             anim = null;
-            setExportStatus("Encoding Video...");
+            setExportStatus(forceWebmRef.current ? "Finishing WebM..." : "Encoding Video...");
 
             // Use canvas-based video encoding with MediaRecorder
             // Create a visible canvas temporarily for MediaRecorder to work
@@ -546,6 +565,8 @@ export const ExportPanel = () => {
             // Draw each frame to the video canvas
             const frameDelay = 1000 / fps;
             for (let i = 0; i < frames.length; i++) {
+                if (!isExportingRef.current) throw new Error("Export cancelled");
+
                 // Load the frame image
                 const img = new Image();
                 await new Promise<void>((resolve, reject) => {
@@ -566,7 +587,12 @@ export const ExportPanel = () => {
             }
 
             recorder.stop();
-            setExportStatus("Finalizing...");
+            if (!forceWebmRef.current && videoFormat === 'mp4') {
+                setExportStatus("Transcoding to MP4 (this may take a while)...");
+            } else {
+                setExportStatus("Finalizing WebM...");
+            }
+
             const webmBlob = await recordingComplete;
 
             // FREE MEMORY IMMEDIATELY
@@ -575,14 +601,44 @@ export const ExportPanel = () => {
             // Cleanup
             document.body.removeChild(videoCanvas);
 
-            if (videoFormat === 'webm') {
+            // CHECK IF SWITCHED TO WEBM
+            console.log("Export Decision:", { format: videoFormat, forced: forceWebmRef.current });
+
+            // Define the switch promise first
+            const switchPromise = new Promise<void>((resolve) => {
+                switchToWebmSignal.current = () => {
+                    console.log("Signal received: Switching to WebM...");
+                    resolve();
+                };
+            });
+
+            // If already forced or WebM selected
+            if (videoFormat === 'webm' || forceWebmRef.current) {
                 downloadBlob(webmBlob, `${fileName.replace('.json', '')}.webm`);
                 toast.success("WebM exported successfully");
             } else {
-                const mp4Blob = await transcodeWebmToMp4(webmBlob);
+                console.log("Starting Transcode to MP4 (with Switch Guard)");
 
-                downloadBlob(mp4Blob, `${fileName.replace('.json', '')}.mp4`);
-                toast.success("MP4 exported successfully");
+                try {
+                    // Race between Transcoding and User clicking "Switch"
+                    // If user clicks switch, we throw unique error to jump to catch block
+                    const mp4Blob = await Promise.race([
+                        transcodeWebmToMp4(webmBlob),
+                        switchPromise.then(() => { throw new Error("SWITCH_TO_WEBM"); })
+                    ]);
+
+                    downloadBlob(mp4Blob as Blob, `${fileName.replace('.json', '')}.mp4`);
+                    toast.success("MP4 exported successfully");
+
+                } catch (e: any) {
+                    if (e.message === 'SWITCH_TO_WEBM' || forceWebmRef.current) {
+                        console.log("Caught Switch Signal - Saving WebM fallback");
+                        downloadBlob(webmBlob, `${fileName.replace('.json', '')}.webm`);
+                        toast.success("Switched to WebM export!");
+                    } else {
+                        throw e; // Real error
+                    }
+                }
             }
 
             setExportProgress(1);
@@ -592,8 +648,11 @@ export const ExportPanel = () => {
             console.error("Video Export Failed", e);
             toast.error(`Video export failed: ${e?.message || "Unknown error"}`);
         } finally {
+            if (slowCheckTimer) clearTimeout(slowCheckTimer);
             setIsExporting(false);
             setExportStatus("Completed");
+            setShowWebmRecommendation(false);
+            switchToWebmSignal.current = null; // Clear the signal resolver
         }
     };
 
@@ -1208,6 +1267,54 @@ export const ExportPanel = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Slow MP4 Export Dialog */}
+                    {showWebmRecommendation && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                            <div className="bg-background border border-border rounded-lg p-6 w-[90%] max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
+                                <div className="flex flex-col items-center text-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center">
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    </div>
+                                    <h3 className="text-lg font-bold">Taking a while?</h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        MP4 export is CPU intensive for complex animations.
+                                    </p>
+                                    <p className="text-xs font-medium text-foreground">
+                                        Switch to WebM for instant finish?
+                                    </p>
+                                    <div className="flex flex-col gap-2 w-full mt-2">
+                                        <Button
+                                            onClick={() => {
+                                                forceWebmRef.current = true;
+                                                setVideoFormat('webm'); // Update UI immediately
+                                                setExportStatus("Switching to WebM..."); // Visual feedback
+                                                setShowWebmRecommendation(false);
+
+                                                // Trigger signal if we are waiting
+                                                if (switchToWebmSignal.current) {
+                                                    switchToWebmSignal.current();
+                                                }
+                                            }}
+                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white h-9"
+                                        >
+                                            ⚡ Switch to WebM (Instant)
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => setShowWebmRecommendation(false)}
+                                            className="w-full h-8 text-xs"
+                                        >
+                                            Keep waiting for MP4...
+                                        </Button>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground mt-1">
+                                        You can convert WebM to MP4 online easily.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                 </div>
             )}
