@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { MessageSquare, Send, Loader2, CheckCircle2, ChevronDown } from "lucide-react";
+import { MessageSquare, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 
 
