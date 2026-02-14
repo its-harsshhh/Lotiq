@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { Shuffle } from 'lucide-react'; // Removed Paintbrush, X
+import { Shuffle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 extend([namesPlugin]);
 
@@ -276,200 +277,240 @@ export const AdvancedColorPicker: React.FC<AdvancedColorPickerProps> = ({ value,
                     )}
                 </PopoverTrigger>
 
-                <PopoverContent className="w-64 p-3" align="start" sideOffset={5}>
-
-                    {/* Mode Tabs (Simple Toggle) */}
-                    {!disableGradient && (
-                        <div className="grid grid-cols-2 gap-1 bg-muted p-1 rounded-lg mb-3">
-                            <button
-                                className={cn(
-                                    "text-[10px] py-1 rounded-md font-medium transition-all text-center",
-                                    mode === 'solid' ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                                )}
-                                onClick={() => {
-                                    setMode('solid');
-                                    emitSolid(solidColor, opacity);
-                                }}
+                <AnimatePresence>
+                    {popoverOpen && (
+                        <PopoverContent
+                            forceMount
+                            asChild
+                            className="w-64 p-0 overflow-hidden bg-transparent border-none shadow-none"
+                            align="start"
+                            sideOffset={8}
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 10, filter: 'blur(10px)' }}
+                                animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+                                exit={{ opacity: 0, scale: 0.95, y: 5, filter: 'blur(10px)' }}
+                                transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                                className="w-64 p-3 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl backdrop-blur-xl"
                             >
-                                Solid
-                            </button>
-                            <button
-                                className={cn(
-                                    "text-[10px] py-1 rounded-md font-medium transition-all text-center",
-                                    mode === 'gradient' ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                <style dangerouslySetInnerHTML={{
+                                    __html: `
+                                    .custom-color-picker .react-colorful__pointer {
+                                        width: 20px;
+                                        height: 20px;
+                                        border: 3px solid white;
+                                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                                        transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                                    }
+                                    .custom-color-picker .react-colorful__pointer--active {
+                                        transform: scale(1.3);
+                                    }
+                                    .custom-color-picker .react-colorful__hue {
+                                        height: 12px;
+                                        border-radius: 6px;
+                                        margin-top: 12px;
+                                    }
+                                    .custom-color-picker .react-colorful__saturation {
+                                        border-radius: 12px;
+                                        border-bottom: none;
+                                    }
+                                `}} />
+
+                                {/* Mode Tabs (Simple Toggle) */}
+                                {!disableGradient && (
+                                    <div className="grid grid-cols-2 gap-1 bg-muted p-1 rounded-lg mb-3">
+                                        <button
+                                            className={cn(
+                                                "text-[10px] py-1 rounded-md font-medium transition-all text-center",
+                                                mode === 'solid' ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                            )}
+                                            onClick={() => {
+                                                setMode('solid');
+                                                emitSolid(solidColor, opacity);
+                                            }}
+                                        >
+                                            Solid
+                                        </button>
+                                        <button
+                                            className={cn(
+                                                "text-[10px] py-1 rounded-md font-medium transition-all text-center",
+                                                mode === 'gradient' ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                            )}
+                                            onClick={() => {
+                                                setMode('gradient');
+                                                handleGradientUpdate(gradientStart, gradientEnd, gradientAngle);
+                                            }}
+                                        >
+                                            Gradient
+                                        </button>
+                                    </div>
                                 )}
-                                onClick={() => {
-                                    setMode('gradient');
-                                    handleGradientUpdate(gradientStart, gradientEnd, gradientAngle);
-                                }}
-                            >
-                                Gradient
-                            </button>
-                        </div>
-                    )}
 
-                    {mode === 'solid' ? (
-                        <div className="space-y-3">
-                            {/* REACT-COLORFUL HEX PICKER */}
-                            <div className="custom-color-picker wrapper">
-                                <HexColorPicker
-                                    color={solidColor}
-                                    onChange={handleHexChange}
-                                    style={{ width: '100%', height: '140px', borderRadius: '8px' }}
-                                />
-                            </div>
+                                {mode === 'solid' ? (
+                                    <div className="space-y-3">
+                                        {/* REACT-COLORFUL HEX PICKER */}
+                                        <div className="custom-color-picker wrapper">
+                                            <HexColorPicker
+                                                color={solidColor}
+                                                onChange={handleHexChange}
+                                                style={{ width: '100%', height: '140px', borderRadius: '8px' }}
+                                            />
+                                        </div>
 
-                            {/* INPUTS ROW */}
-                            <div className="flex gap-2 items-end">
-                                {/* Hex Input */}
-                                <div className="space-y-1 flex-1">
-                                    <Label className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Hex</Label>
-                                    <div className="relative flex items-center">
-                                        <span className="absolute left-2 text-[10px] text-muted-foreground">#</span>
-                                        <Input
-                                            type="text"
-                                            value={hexInput.replace('#', '')}
-                                            onChange={(e) => {
-                                                const val = e.target.value.toUpperCase();
-                                                setHexInput('#' + val);
-                                                // Apply if valid
-                                                if ((val.length === 6 || val.length === 3) && /^[0-9A-F]+$/.test(val)) {
-                                                    const c = colord('#' + val);
-                                                    if (c.isValid()) {
-                                                        setSolidColor(c.toHex());
-                                                        emitSolid(c.toHex(), opacity);
-                                                    }
-                                                }
-                                            }}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    let hex = hexInput.replace('#', '').toUpperCase();
-                                                    let expandedHex = '';
+                                        {/* INPUTS ROW */}
+                                        <div className="flex gap-2 items-end">
+                                            {/* Hex Input */}
+                                            <div className="space-y-1 flex-1">
+                                                <Label className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Hex</Label>
+                                                <div className="relative flex items-center">
+                                                    <span className="absolute left-2 text-[10px] text-muted-foreground">#</span>
+                                                    <Input
+                                                        type="text"
+                                                        value={hexInput.replace('#', '')}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.toUpperCase();
+                                                            setHexInput('#' + val);
+                                                            // Apply if valid
+                                                            if ((val.length === 6 || val.length === 3) && /^[0-9A-F]+$/.test(val)) {
+                                                                const c = colord('#' + val);
+                                                                if (c.isValid()) {
+                                                                    setSolidColor(c.toHex());
+                                                                    emitSolid(c.toHex(), opacity);
+                                                                }
+                                                            }
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                let hex = hexInput.replace('#', '').toUpperCase();
+                                                                let expandedHex = '';
 
-                                                    // Single char: repeat 6 times (F -> FFFFFF)
-                                                    if (hex.length === 1 && /^[0-9A-F]$/.test(hex)) {
-                                                        expandedHex = hex.repeat(6);
-                                                    }
-                                                    // Two chars: repeat 3 times (FF -> FFFFFF)
-                                                    else if (hex.length === 2 && /^[0-9A-F]+$/.test(hex)) {
-                                                        expandedHex = hex.repeat(3);
-                                                    }
-                                                    // Valid 3 or 6 char hex: use as-is
-                                                    else if ((hex.length === 3 || hex.length === 6) && /^[0-9A-F]+$/.test(hex)) {
-                                                        expandedHex = hex.length === 3 ? hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2] : hex;
-                                                    }
+                                                                // Single char: repeat 6 times (F -> FFFFFF)
+                                                                if (hex.length === 1 && /^[0-9A-F]$/.test(hex)) {
+                                                                    expandedHex = hex.repeat(6);
+                                                                }
+                                                                // Two chars: repeat 3 times (FF -> FFFFFF)
+                                                                else if (hex.length === 2 && /^[0-9A-F]+$/.test(hex)) {
+                                                                    expandedHex = hex.repeat(3);
+                                                                }
+                                                                // Valid 3 or 6 char hex: use as-is
+                                                                else if ((hex.length === 3 || hex.length === 6) && /^[0-9A-F]+$/.test(hex)) {
+                                                                    expandedHex = hex.length === 3 ? hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2] : hex;
+                                                                }
 
-                                                    if (expandedHex) {
-                                                        const fullHex = '#' + expandedHex;
-                                                        setHexInput(fullHex);
-                                                        const c = colord(fullHex);
-                                                        if (c.isValid()) {
-                                                            setSolidColor(c.toHex());
-                                                            emitSolid(c.toHex(), opacity);
-                                                        }
-                                                        // Close popover on Enter
-                                                        setPopoverOpen(false);
-                                                    }
-                                                }
-                                            }}
-                                            className="h-7 pl-4 text-[10px] font-mono uppercase bg-background border-input focus-visible:ring-1"
-                                            maxLength={6}
-                                        />
+                                                                if (expandedHex) {
+                                                                    const fullHex = '#' + expandedHex;
+                                                                    setHexInput(fullHex);
+                                                                    const c = colord(fullHex);
+                                                                    if (c.isValid()) {
+                                                                        setSolidColor(c.toHex());
+                                                                        emitSolid(c.toHex(), opacity);
+                                                                    }
+                                                                    // Close popover on Enter
+                                                                    setPopoverOpen(false);
+                                                                }
+                                                            }
+                                                        }}
+                                                        className="h-7 pl-4 text-[10px] font-mono uppercase bg-background border-input focus-visible:ring-1"
+                                                        maxLength={6}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Opacity Input (No Slider) */}
+                                            <div className="space-y-1 w-16">
+                                                <Label className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Opacity</Label>
+                                                <div className="relative flex items-center">
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={100}
+                                                        value={opacity}
+                                                        onChange={(e) => handleOpacityChange(parseInt(e.target.value) || 0)}
+                                                        className="h-7 pr-4 text-[10px] font-mono text-center bg-background border-input focus-visible:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    />
+                                                    <span className="absolute right-1.5 text-[9px] text-muted-foreground">%</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-
-                                {/* Opacity Input (No Slider) */}
-                                <div className="space-y-1 w-16">
-                                    <Label className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Opacity</Label>
-                                    <div className="relative flex items-center">
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            max={100}
-                                            value={opacity}
-                                            onChange={(e) => handleOpacityChange(parseInt(e.target.value) || 0)}
-                                            className="h-7 pr-4 text-[10px] font-mono text-center bg-background border-input focus-visible:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                        />
-                                        <span className="absolute right-1.5 text-[9px] text-muted-foreground">%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {/* Gradient Preview Bar */}
-                            <div
-                                className="w-full h-20 rounded-lg border shadow-sm mb-2"
-                                style={{
-                                    background: `linear-gradient(${gradientAngle}deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
-                                    backgroundImage: `
+                                ) : (
+                                    <div className="space-y-3">
+                                        {/* Gradient Preview Bar */}
+                                        <div
+                                            className="w-full h-20 rounded-lg border shadow-sm mb-2"
+                                            style={{
+                                                background: `linear-gradient(${gradientAngle}deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
+                                                backgroundImage: `
                                     linear-gradient(${gradientAngle}deg, ${gradientStart} 0%, ${gradientEnd} 100%),
                                     linear-gradient(45deg, #ccc 25%, transparent 25%), 
                                     linear-gradient(-45deg, #ccc 25%, transparent 25%), 
                                     linear-gradient(45deg, transparent 75%, #ccc 75%), 
                                     linear-gradient(-45deg, transparent 75%, #ccc 75%)
                                 `,
-                                    backgroundSize: '100% 100%, 10px 10px, 10px 10px, 10px 10px, 10px 10px' // Add checkerboard behind gradient for transparency awareness? (optional)
-                                }}
-                            />
-
-                            {/* Angle Slider */}
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between items-center">
-                                    <Label className="text-[9px] text-muted-foreground uppercase font-semibold">Angle</Label>
-                                    <span className="text-[9px] font-mono text-muted-foreground">{gradientAngle}°</span>
-                                </div>
-                                <Slider
-                                    value={[gradientAngle]}
-                                    max={360}
-                                    step={1}
-                                    onValueChange={(vals) => handleGradientUpdate(gradientStart, gradientEnd, vals[0])}
-                                    className="[&_.bg-primary]:bg-foreground/50" // Stylistic tweak
-                                />
-                            </div>
-
-                            {/* Stops Selection */}
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                <div className="space-y-1">
-                                    <Label className="text-[9px] text-muted-foreground uppercase font-semibold">Start Color</Label>
-                                    <div className="h-7 flex items-center border rounded-md px-1 bg-background">
-                                        <input
-                                            type="color"
-                                            value={gradientStart}
-                                            onChange={(e) => handleGradientUpdate(e.target.value, gradientEnd, gradientAngle)}
-                                            className="h-5 w-5 rounded-sm p-0 border-0 cursor-pointer bg-transparent"
+                                                backgroundSize: '100% 100%, 10px 10px, 10px 10px, 10px 10px, 10px 10px' // Add checkerboard behind gradient for transparency awareness? (optional)
+                                            }}
                                         />
-                                        <span className="text-[9px] ml-1.5 font-mono uppercase text-muted-foreground truncate">{gradientStart}</span>
-                                    </div>
-                                </div>
 
-                                <div className="space-y-1">
-                                    <Label className="text-[9px] text-muted-foreground uppercase font-semibold">End Color</Label>
-                                    <div className="h-7 flex items-center border rounded-md px-1 bg-background">
-                                        <input
-                                            type="color"
-                                            value={gradientEnd}
-                                            onChange={(e) => handleGradientUpdate(gradientStart, e.target.value, gradientAngle)}
-                                            className="h-5 w-5 rounded-sm p-0 border-0 cursor-pointer bg-transparent"
-                                        />
-                                        <span className="text-[9px] ml-1.5 font-mono uppercase text-muted-foreground truncate">{gradientEnd}</span>
-                                    </div>
-                                </div>
-                            </div>
+                                        {/* Angle Slider */}
+                                        <div className="space-y-1.5">
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-[9px] text-muted-foreground uppercase font-semibold">Angle</Label>
+                                                <span className="text-[9px] font-mono text-muted-foreground">{gradientAngle}°</span>
+                                            </div>
+                                            <Slider
+                                                value={[gradientAngle]}
+                                                max={360}
+                                                step={1}
+                                                onValueChange={(vals) => handleGradientUpdate(gradientStart, gradientEnd, vals[0])}
+                                                className="[&_.bg-primary]:bg-foreground/50" // Stylistic tweak
+                                            />
+                                        </div>
 
-                            {/* Randomize Button */}
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                className="w-full text-[10px] h-7 mt-1 font-medium text-muted-foreground hover:text-foreground"
-                                onClick={randomizeGradient}
-                            >
-                                <Shuffle className="w-3 h-3 mr-1.5" />
-                                Randomize
-                            </Button>
-                        </div>
+                                        {/* Stops Selection */}
+                                        <div className="grid grid-cols-2 gap-2 mt-2">
+                                            <div className="space-y-1">
+                                                <Label className="text-[9px] text-muted-foreground uppercase font-semibold">Start Color</Label>
+                                                <div className="h-7 flex items-center border rounded-md px-1 bg-background">
+                                                    <input
+                                                        type="color"
+                                                        value={gradientStart}
+                                                        onChange={(e) => handleGradientUpdate(e.target.value, gradientEnd, gradientAngle)}
+                                                        className="h-5 w-5 rounded-sm p-0 border-0 cursor-pointer bg-transparent"
+                                                    />
+                                                    <span className="text-[9px] ml-1.5 font-mono uppercase text-muted-foreground truncate">{gradientStart}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-[9px] text-muted-foreground uppercase font-semibold">End Color</Label>
+                                                <div className="h-7 flex items-center border rounded-md px-1 bg-background">
+                                                    <input
+                                                        type="color"
+                                                        value={gradientEnd}
+                                                        onChange={(e) => handleGradientUpdate(gradientStart, e.target.value, gradientAngle)}
+                                                        className="h-5 w-5 rounded-sm p-0 border-0 cursor-pointer bg-transparent"
+                                                    />
+                                                    <span className="text-[9px] ml-1.5 font-mono uppercase text-muted-foreground truncate">{gradientEnd}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Randomize Button */}
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="w-full text-[10px] h-7 mt-1 font-medium text-muted-foreground hover:text-foreground"
+                                            onClick={randomizeGradient}
+                                        >
+                                            <Shuffle className="w-3 h-3 mr-1.5" />
+                                            Randomize
+                                        </Button>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </PopoverContent>
                     )}
-                </PopoverContent>
+                </AnimatePresence>
             </Popover>
 
             {/* Editable Hex Input - Direct editing without opening popover */}

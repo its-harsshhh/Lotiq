@@ -6,6 +6,7 @@ import { replaceColor, updateColorForInstance, updateGradientOffset } from '@/en
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { Palette, ChevronDown, ChevronUp, ChevronRight, Layers as LayerIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { AdvancedColorPicker } from '@/components/ui/advanced-color-picker';
 import { cn } from '@/lib/utils';
 
@@ -196,49 +197,62 @@ export const ColorPalette = () => {
                                             const isExpanded = expandedItem?.type === 'solid' && expandedItem?.index === idx;
                                             const belongsToSelectedLayer = colorBelongsToSelectedLayer(c);
                                             return (
-                                                <div
+                                                <motion.div
                                                     key={idx}
+                                                    layout
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: idx * 0.03 }}
                                                     className={cn(
-                                                        "border border-border/60 rounded-xl shadow-sm bg-card/50 overflow-hidden transition-all duration-300",
-                                                        belongsToSelectedLayer && "ring-1 ring-primary border-primary/50 bg-primary/5 shadow-[0_0_15px_-5px_var(--primary)]",
-                                                        isExpanded && "bg-card shadow-md ring-1 ring-border"
+                                                        "border border-border/60 rounded-xl shadow-sm bg-card/50 overflow-hidden transition-all duration-500",
+                                                        belongsToSelectedLayer && "ring-2 ring-indigo-500/50 border-indigo-500/50 bg-indigo-500/5 shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)]",
+                                                        isExpanded && "bg-card shadow-lg ring-1 ring-border scale-[1.02] z-10"
                                                     )}
                                                     onMouseEnter={() => handleColorHover(c)}
                                                     onMouseLeave={() => handleColorHover(null)}
                                                 >
                                                     <div
-                                                        className="flex items-center gap-3 p-2 pl-2 cursor-pointer hover:bg-muted/30 transition-colors"
+                                                        className="flex items-center gap-1.5 p-2 pr-1 pl-1.5 cursor-pointer hover:bg-muted/30 transition-colors group/row"
                                                         onClick={() => toggleExpand('solid', idx)}
                                                     >
-                                                        <div className="flex items-center justify-center w-6 h-6 shrink-0 transition-colors hover:text-foreground">
-                                                            {isExpanded ? (
-                                                                <ChevronDown className="size-3.5 text-primary" />
-                                                            ) : (
-                                                                <ChevronRight className="size-3.5 text-muted-foreground/50 group-hover:text-muted-foreground" />
-                                                            )}
-                                                        </div>
+                                                        <motion.div
+                                                            animate={{ rotate: isExpanded ? 0 : -90, color: isExpanded ? "#6366f1" : "rgba(161, 161, 170, 0.3)" }}
+                                                            className="flex items-center justify-center w-4 h-4 shrink-0"
+                                                        >
+                                                            <ChevronDown className="size-3" />
+                                                        </motion.div>
 
-                                                        <div className="flex flex-col min-w-0">
+                                                        <div className="flex items-center min-w-[12px] shrink-0">
                                                             <span className={cn(
-                                                                "text-[10px] font-bold text-muted-foreground uppercase tracking-tight",
-                                                                belongsToSelectedLayer && "text-primary"
+                                                                "text-[10px] font-bold text-muted-foreground/50 tabular-nums transition-colors",
+                                                                belongsToSelectedLayer && "text-indigo-500"
                                                             )}>
-                                                                {c.count > 1 ? `${c.count} Instances` : '1 Instance'}
+                                                                {c.count}
                                                             </span>
                                                         </div>
 
-                                                        <div className="ml-auto pr-1" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="flex-1 flex justify-end min-w-0" onClick={(e) => e.stopPropagation()}>
                                                             <AdvancedColorPicker
                                                                 color={c.hex!}
                                                                 onChange={(val) => handleGlobalUpdate(c.hex!, val)}
                                                                 disableGradient
                                                                 onOpenChange={(open) => !open && handleCommit()}
-                                                                className="h-8 w-auto min-w-[90px] border-none bg-muted/40 hover:bg-muted/60 rounded-lg pl-1 pr-2.5 gap-2 flex-row-reverse shadow-none transition-all"
+                                                                className="h-7 w-fit max-w-[110px] border-none bg-zinc-100/50 dark:bg-zinc-800/50 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 rounded-md pl-1.5 pr-2 gap-2 shadow-none transition-all"
                                                             >
-                                                                <div
-                                                                    className="size-5 rounded-md shadow-sm cursor-pointer hover:scale-110 transition-transform shrink-0 ring-1 ring-black/10 dark:ring-white/20"
-                                                                    style={{ backgroundColor: c.hex }}
-                                                                />
+                                                                <motion.div
+                                                                    whileHover={{ scale: 1.1 }}
+                                                                    whileTap={{ scale: 0.9 }}
+                                                                    className="relative size-4 rounded shadow-sm shrink-0 ring-1 ring-black/5 dark:ring-white/5 overflow-hidden"
+                                                                >
+                                                                    <div
+                                                                        className="absolute inset-0 z-0 opacity-100"
+                                                                        style={{
+                                                                            backgroundImage: `conic-gradient(#ddd 90deg, #fff 90deg 180deg, #ddd 180deg 270deg, #fff 270deg)`,
+                                                                            backgroundSize: '4px 4px'
+                                                                        }}
+                                                                    />
+                                                                    <div className="absolute inset-0 z-10" style={{ backgroundColor: c.hex }} />
+                                                                </motion.div>
                                                             </AdvancedColorPicker>
                                                         </div>
                                                     </div>
@@ -280,7 +294,7 @@ export const ColorPalette = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </motion.div>
                                             );
                                         })}
                                     </div>
@@ -339,7 +353,7 @@ export const ColorPalette = () => {
                                                         </div>
 
                                                         <div className="ml-auto pr-1 flex items-center gap-2">
-                                                            <div className="h-6 w-16 rounded-md border shadow-sm ring-1 ring-black/5 dark:ring-white/10" style={{ background: gradientBackground }} />
+                                                            <div className="h-5 w-12 rounded border shadow-sm ring-1 ring-black/5 dark:ring-white/10" style={{ background: gradientBackground }} />
                                                         </div>
                                                     </div>
 
