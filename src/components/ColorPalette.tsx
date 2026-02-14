@@ -4,9 +4,8 @@ import { useSelectionStore } from '@/store/useSelectionStore';
 import { extractColors, type ColorLocation, type ColorInstance } from '@/engine/colors';
 import { replaceColor, updateColorForInstance, updateGradientOffset } from '@/engine/transformer';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
 
-import { Palette, ChevronDown, ChevronUp, ChevronRight, Layers as LayerIcon, GripHorizontal } from 'lucide-react';
+import { Palette, ChevronDown, ChevronUp, ChevronRight, Layers as LayerIcon } from 'lucide-react';
 import { AdvancedColorPicker } from '@/components/ui/advanced-color-picker';
 import { cn } from '@/lib/utils';
 
@@ -207,32 +206,40 @@ export const ColorPalette = () => {
                                                     onMouseEnter={() => handleColorHover(c)}
                                                     onMouseLeave={() => handleColorHover(null)}
                                                 >
-                                                    <div className="flex items-center justify-between p-2 pl-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => toggleExpand('solid', idx)}>
-                                                        <span className={cn(
-                                                            "text-xs font-medium text-foreground",
-                                                            belongsToSelectedLayer && "text-primary font-semibold"
-                                                        )}>
-                                                            {c.count > 1 ? `${c.count} Instances` : '1 Instance'}
-                                                        </span>
-                                                        <div className="flex items-center gap-2">
-                                                            {/* Pill Component */}
-                                                            <div onClick={(e) => e.stopPropagation()}>
-                                                                <AdvancedColorPicker
-                                                                    color={c.hex!}
-                                                                    onChange={(val) => handleGlobalUpdate(c.hex!, val)}
-                                                                    disableGradient
-                                                                    onOpenChange={(open) => !open && handleCommit()}
-                                                                    className="h-8 w-auto min-w-[100px] border border-border/40 bg-background/80 hover:bg-muted/50 rounded-full pl-1.5 pr-3 gap-2 flex-row-reverse shadow-sm transition-all"
-                                                                >
-                                                                    <div
-                                                                        className="size-5 rounded-full shadow-sm cursor-pointer hover:scale-110 transition-transform shrink-0 ring-1 ring-black/10 dark:ring-white/20"
-                                                                        style={{ backgroundColor: c.hex }}
-                                                                    />
-                                                                </AdvancedColorPicker>
-                                                            </div>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/70 hover:text-foreground">
-                                                                {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                                                            </Button>
+                                                    <div
+                                                        className="flex items-center gap-3 p-2 pl-2 cursor-pointer hover:bg-muted/30 transition-colors"
+                                                        onClick={() => toggleExpand('solid', idx)}
+                                                    >
+                                                        <div className="flex items-center justify-center w-6 h-6 shrink-0 transition-colors hover:text-foreground">
+                                                            {isExpanded ? (
+                                                                <ChevronDown className="size-3.5 text-primary" />
+                                                            ) : (
+                                                                <ChevronRight className="size-3.5 text-muted-foreground/50 group-hover:text-muted-foreground" />
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className={cn(
+                                                                "text-[10px] font-bold text-muted-foreground uppercase tracking-tight",
+                                                                belongsToSelectedLayer && "text-primary"
+                                                            )}>
+                                                                {c.count > 1 ? `${c.count} Instances` : '1 Instance'}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="ml-auto pr-1" onClick={(e) => e.stopPropagation()}>
+                                                            <AdvancedColorPicker
+                                                                color={c.hex!}
+                                                                onChange={(val) => handleGlobalUpdate(c.hex!, val)}
+                                                                disableGradient
+                                                                onOpenChange={(open) => !open && handleCommit()}
+                                                                className="h-8 w-auto min-w-[90px] border-none bg-muted/40 hover:bg-muted/60 rounded-lg pl-1 pr-2.5 gap-2 flex-row-reverse shadow-none transition-all"
+                                                            >
+                                                                <div
+                                                                    className="size-5 rounded-md shadow-sm cursor-pointer hover:scale-110 transition-transform shrink-0 ring-1 ring-black/10 dark:ring-white/20"
+                                                                    style={{ backgroundColor: c.hex }}
+                                                                />
+                                                            </AdvancedColorPicker>
                                                         </div>
                                                     </div>
 
@@ -310,23 +317,29 @@ export const ColorPalette = () => {
                                                     onMouseEnter={() => handleColorHover(c)}
                                                     onMouseLeave={() => handleColorHover(null)}
                                                 >
-                                                    <div className="flex items-center justify-between p-2 pl-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => toggleExpand('gradient', idx)}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="p-1 rounded bg-muted/20">
-                                                                <GripHorizontal className="size-3.5 text-muted-foreground" />
-                                                            </div>
+                                                    <div
+                                                        className="flex items-center gap-3 p-2 pl-2 cursor-pointer hover:bg-muted/30 transition-colors"
+                                                        onClick={() => toggleExpand('gradient', idx)}
+                                                    >
+                                                        <div className="flex items-center justify-center w-6 h-6 shrink-0 transition-colors hover:text-foreground">
+                                                            {isExpanded ? (
+                                                                <ChevronDown className="size-3.5 text-primary" />
+                                                            ) : (
+                                                                <ChevronRight className="size-3.5 text-muted-foreground/50 group-hover:text-muted-foreground" />
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex flex-col min-w-0 flex-1">
                                                             <span className={cn(
-                                                                "text-xs font-medium text-foreground",
-                                                                belongsToSelectedLayer && "text-primary font-semibold"
+                                                                "text-[10px] font-bold text-muted-foreground uppercase tracking-tight truncate",
+                                                                belongsToSelectedLayer && "text-primary"
                                                             )}>
-                                                                {c.count > 1 ? `Gradient Group (${c.count})` : c.locations[0]?.layerName || 'Gradient'}
+                                                                {c.count > 1 ? `Gradient (${c.count})` : c.locations[0]?.layerName || 'Gradient'}
                                                             </span>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="h-6 w-20 rounded-md border shadow-sm ring-1 ring-black/5 dark:ring-white/10" style={{ background: gradientBackground }} />
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/70 hover:text-foreground">
-                                                                {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                                                            </Button>
+
+                                                        <div className="ml-auto pr-1 flex items-center gap-2">
+                                                            <div className="h-6 w-16 rounded-md border shadow-sm ring-1 ring-black/5 dark:ring-white/10" style={{ background: gradientBackground }} />
                                                         </div>
                                                     </div>
 
