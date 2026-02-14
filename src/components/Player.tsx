@@ -206,17 +206,14 @@ export const Player = () => {
                 </button>
             </div>
 
-            {/* Checkerboard background for transparency */}
-            <div className="absolute inset-0 z-0 opacity-20"
+            {/* Modern Dot Pattern Background */}
+            <div className="absolute inset-0 z-0 bg-secondary/5" />
+            <div
+                className="absolute inset-0 z-0 opacity-20 dark:opacity-10"
                 style={{
-                    backgroundImage: `
-                    linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                    linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                    linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                    linear-gradient(-45deg, transparent 75%, #ccc 75%)
-                  `,
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                    backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
+                    backgroundSize: '24px 24px',
+                    color: 'var(--foreground)' // Uses current text color which adapts to theme
                 }}
             />
 
@@ -229,7 +226,7 @@ export const Player = () => {
                     <div
                         key="social-view"
                         ref={socialWrapperRef}
-                        className="relative shadow-xl flex items-center justify-center transition-all duration-300"
+                        className="relative shadow-xl flex items-center justify-center transition-all duration-300 ring-1 ring-black/5"
                         style={{
                             background: socialSettings.bgColor,
                             aspectRatio: `${currentAspectRatio}`,
@@ -309,17 +306,28 @@ export const Player = () => {
                     </div>
                 ) : (
                     // --- DEFAULT PREVIEW MODE ---
-                    // ... (Unchanged)
                     <div
                         key="simple-view"
                         ref={containerRef}
-                        className="relative bg-white/5 shadow-2xl border-2 border-gray-400"
+                        className="relative shadow-2xl rounded-sm overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
                         style={{
                             aspectRatio: lottieData ? `${lottieData.w} / ${lottieData.h}` : 'auto',
                             width: 'auto',
                             height: 'auto',
                             maxWidth: '100%',
-                            maxHeight: '100%'
+                            maxHeight: '100%',
+                            // Add a subtle checkerboard ONLY for the artboard itself if needed, or just let it float
+                            // I'll add a subtle background color to show bounds
+                            backgroundSize: '20px 20px',
+                            backgroundColor: 'var(--background)',
+                            backgroundImage: `
+                                linear-gradient(45deg, var(--muted) 25%, transparent 25%), 
+                                linear-gradient(-45deg, var(--muted) 25%, transparent 25%), 
+                                linear-gradient(45deg, transparent 75%, var(--muted) 75%), 
+                                linear-gradient(-45deg, transparent 75%, var(--muted) 75%)
+                            `,
+                            backgroundBlendMode: 'overlay',
+                            opacity: 1 // reset opacity
                         }}
                     />
                 )}

@@ -3,10 +3,19 @@ import { Coffee, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { ModeToggle } from "./mode-toggle";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export const LandingNavbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+    const { scrollY } = useScroll();
+
+    useMotionValueEvent(scrollY, "change", (latest) => {
+        setScrolled(latest > 20);
+    });
 
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
@@ -23,30 +32,44 @@ export const LandingNavbar = () => {
     ];
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl shadow-sm">
+        <nav
+            className={cn(
+                "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
+                scrolled
+                    ? "border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl shadow-sm"
+                    : "border-transparent bg-transparent"
+            )}
+        >
             <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
 
                 {/* Logo */}
-                <div
+                <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     className="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer"
                     onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 >
-                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-indigo-500/20 shadow-lg">
-                        <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                        </svg>
-                    </div>
-                    <span className="text-zinc-900 dark:text-white">Lotiq</span>
-                </div>
+                    <img src="/logo/logo-light-mode.svg" alt="Lotiq" className="h-8 w-auto dark:hidden" />
+                    <img src="/logo/logo-dark-mode.svg" alt="Lotiq" className="h-8 w-auto hidden dark:block" />
+                </motion.div>
 
                 {/* Desktop Nav */}
-                <div className="hidden md:flex items-center gap-8">
-                    {navLinks.map((link) => (
+                <div className="hidden md:flex items-center gap-1">
+                    {navLinks.map((link, index) => (
                         <button
                             key={link.name}
                             onClick={() => scrollToSection(link.id)}
-                            className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                            onMouseEnter={() => setHoveredIndex(index)}
+                            onMouseLeave={() => setHoveredIndex(null)}
+                            className="relative px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                         >
+                            {hoveredIndex === index && (
+                                <motion.span
+                                    layoutId="nav-pill"
+                                    className="absolute inset-0 bg-zinc-100 dark:bg-zinc-800 rounded-full -z-10"
+                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                />
+                            )}
                             {link.name}
                         </button>
                     ))}
@@ -55,10 +78,22 @@ export const LandingNavbar = () => {
                 {/* Desktop Actions */}
                 <div className="hidden md:flex items-center gap-4">
                     <a href="https://buymeacoffee.com/harshpal" target="_blank" rel="noreferrer">
-                        <Button size="sm" className="gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-bold shadow-sm hover:shadow-md transition-all">
-                            <Coffee className="w-4 h-4" />
-                            <span className="font-bold">Buy coffee</span>
-                        </Button>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button size="sm" className="relative overflow-hidden gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-bold shadow-sm hover:shadow-md transition-all rounded-full px-5 group">
+                                <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-[100%]"
+                                    animate={{ translateX: ["-100%", "200%"] }}
+                                    transition={{
+                                        repeat: Infinity,
+                                        duration: 2,
+                                        ease: "linear",
+                                        repeatDelay: 3
+                                    }}
+                                />
+                                <Coffee className="w-4 h-4 relative z-10" />
+                                <span className="font-bold relative z-10">Buy coffee</span>
+                            </Button>
+                        </motion.div>
                     </a>
                     <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-800" />
                     <ModeToggle />
@@ -97,8 +132,18 @@ export const LandingNavbar = () => {
                             ))}
                             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
                                 <a href="https://buymeacoffee.com/harshpal" target="_blank" rel="noreferrer" className="block">
-                                    <Button className="w-full gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-bold">
-                                        <Coffee className="w-4 h-4" />
+                                    <Button className="w-full relative overflow-hidden gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-bold">
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-[100%]"
+                                            animate={{ translateX: ["-100%", "200%"] }}
+                                            transition={{
+                                                repeat: Infinity,
+                                                duration: 2,
+                                                ease: "linear",
+                                                repeatDelay: 3
+                                            }}
+                                        />
+                                        <Coffee className="w-4 h-4 relative z-10" />
                                         Buy me a coffee
                                     </Button>
                                 </a>

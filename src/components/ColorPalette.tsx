@@ -5,6 +5,7 @@ import { extractColors, type ColorLocation, type ColorInstance } from '@/engine/
 import { replaceColor, updateColorForInstance, updateGradientOffset } from '@/engine/transformer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+
 import { Palette, ChevronDown, ChevronUp, ChevronRight, Layers as LayerIcon, GripHorizontal } from 'lucide-react';
 import { AdvancedColorPicker } from '@/components/ui/advanced-color-picker';
 import { cn } from '@/lib/utils';
@@ -164,190 +165,228 @@ export const ColorPalette = () => {
     return (
         <div className="flex flex-col h-full border-t border-border bg-background">
             <div
-                className="p-4 border-b flex items-center gap-2 font-medium bg-muted/30 text-sm cursor-pointer hover:bg-muted/50 transition-colors"
+                className="px-4 py-3 border-b flex items-center gap-2 font-medium cursor-pointer hover:bg-muted/50 transition-colors text-foreground select-none"
                 onClick={() => setIsMainExpanded(!isMainExpanded)}
             >
-                <Palette className="size-4" />
-                Colors
+                <Palette className="size-4 text-muted-foreground" />
+                <span className="text-sm">Colors</span>
                 <div className="ml-auto flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{solids.length + gradients.length}</span>
+                    <span className="text-xs text-muted-foreground font-normal">{solids.length + gradients.length}</span>
                     {isMainExpanded ? <ChevronDown className="size-3.5 text-muted-foreground" /> : <ChevronRight className="size-3.5 text-muted-foreground" />}
                 </div>
             </div>
 
             {isMainExpanded && (
                 <ScrollArea className="flex-1">
-                    <div className="flex flex-col p-4 gap-6">
+                    <div className="flex flex-col p-4 gap-6 animate-in fade-in slide-in-from-top-2 duration-500">
 
                         {/* Color Instance Clusters */}
                         {solids.length > 0 && (
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-3">
                                 <div
-                                    className="flex items-center justify-between cursor-pointer hover:bg-muted/50 p-1 rounded"
+                                    className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
                                     onClick={() => toggleSection('solids')}
                                 >
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Color Instance Clusters ({solids.length})</span>
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Solid Colors ({solids.length})</span>
                                     {sectionsExpanded.solids ? <ChevronUp className="size-3 text-muted-foreground" /> : <ChevronDown className="size-3 text-muted-foreground" />}
                                 </div>
 
-                                {sectionsExpanded.solids && solids.map((c, idx) => {
-                                    const isExpanded = expandedItem?.type === 'solid' && expandedItem?.index === idx;
-                                    const belongsToSelectedLayer = colorBelongsToSelectedLayer(c);
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className={cn(
-                                                "border rounded-lg shadow-sm bg-card overflow-hidden transition-all",
-                                                belongsToSelectedLayer && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background"
-                                            )}
-                                            onMouseEnter={() => handleColorHover(c)}
-                                            onMouseLeave={() => handleColorHover(null)}
-                                        >
-                                            <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => toggleExpand('solid', idx)}>
-                                                <span className={cn(
-                                                    "text-xs font-medium",
-                                                    belongsToSelectedLayer && "text-amber-500"
-                                                )}>
-                                                    {c.count > 1 ? `${c.count} Instances` : '1 Instance'}
-                                                </span>
-                                                <div className="flex items-center gap-2">
-                                                    {/* Pill Component */}
-                                                    <AdvancedColorPicker
-                                                        color={c.hex!}
-                                                        onChange={(val) => handleGlobalUpdate(c.hex!, val)}
-                                                        disableGradient
-                                                        onOpenChange={(open) => !open && handleCommit()}
-                                                        className="h-7 w-auto border-0 bg-muted/50 rounded-full pl-1 pr-3 gap-2 flex-row-reverse min-w-[90px]"
-                                                    >
-                                                        <div className="size-5 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform shrink-0" style={{ color: c.hex }} />
-                                                    </AdvancedColorPicker>
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
-                                                        {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                                                    </Button>
-                                                </div>
-                                            </div>
-
-                                            {isExpanded && (
-                                                <div className="bg-muted/10 border-t">
-                                                    {c.locations.map((loc, locIdx) => (
-                                                        <div
-                                                            key={`${loc.layerInd}-${locIdx}`}
-                                                            className="flex items-center justify-between px-3 py-2 text-xs border-b last:border-0 hover:bg-muted/20 cursor-pointer transition-colors"
-                                                            onMouseEnter={() => handleLocationHover(loc)}
-                                                            onMouseLeave={() => handleLocationHover(null)}
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <LayerIcon className="size-3 text-muted-foreground shrink-0" />
-                                                                <span className="truncate text-muted-foreground max-w-[120px]" title={loc.layerName}>{formatLayerName(loc)}</span>
+                                {sectionsExpanded.solids && (
+                                    <div className="flex flex-col gap-2">
+                                        {solids.map((c, idx) => {
+                                            const isExpanded = expandedItem?.type === 'solid' && expandedItem?.index === idx;
+                                            const belongsToSelectedLayer = colorBelongsToSelectedLayer(c);
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className={cn(
+                                                        "border border-border/60 rounded-xl shadow-sm bg-card/50 overflow-hidden transition-all duration-300",
+                                                        belongsToSelectedLayer && "ring-1 ring-primary border-primary/50 bg-primary/5 shadow-[0_0_15px_-5px_var(--primary)]",
+                                                        isExpanded && "bg-card shadow-md ring-1 ring-border"
+                                                    )}
+                                                    onMouseEnter={() => handleColorHover(c)}
+                                                    onMouseLeave={() => handleColorHover(null)}
+                                                >
+                                                    <div className="flex items-center justify-between p-2 pl-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => toggleExpand('solid', idx)}>
+                                                        <span className={cn(
+                                                            "text-xs font-medium text-foreground",
+                                                            belongsToSelectedLayer && "text-primary font-semibold"
+                                                        )}>
+                                                            {c.count > 1 ? `${c.count} Instances` : '1 Instance'}
+                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            {/* Pill Component */}
+                                                            <div onClick={(e) => e.stopPropagation()}>
+                                                                <AdvancedColorPicker
+                                                                    color={c.hex!}
+                                                                    onChange={(val) => handleGlobalUpdate(c.hex!, val)}
+                                                                    disableGradient
+                                                                    onOpenChange={(open) => !open && handleCommit()}
+                                                                    className="h-8 w-auto min-w-[100px] border border-border/40 bg-background/80 hover:bg-muted/50 rounded-full pl-1.5 pr-3 gap-2 flex-row-reverse shadow-sm transition-all"
+                                                                >
+                                                                    <div
+                                                                        className="size-5 rounded-full shadow-sm cursor-pointer hover:scale-110 transition-transform shrink-0 ring-1 ring-black/10 dark:ring-white/20"
+                                                                        style={{ backgroundColor: c.hex }}
+                                                                    />
+                                                                </AdvancedColorPicker>
                                                             </div>
-                                                            <AdvancedColorPicker
-                                                                color={c.hex!}
-                                                                onChange={(val) => handleInstanceUpdate(loc, val)}
-                                                                disableGradient
-                                                                onOpenChange={(open) => !open && handleCommit()}
-                                                                className="h-6 w-auto border-0 bg-muted/50 rounded-full pl-1 pr-3 gap-2 flex-row-reverse min-w-[80px]"
-                                                            >
-                                                                <div className="size-4 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform shrink-0" style={{ color: c.hex }} />
-                                                            </AdvancedColorPicker>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/70 hover:text-foreground">
+                                                                {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                                                            </Button>
                                                         </div>
-                                                    ))}
+                                                    </div>
+
+                                                    {/* Expanded List with Animation */}
+                                                    <div className={cn(
+                                                        "grid transition-all duration-300 ease-in-out",
+                                                        isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                                                    )}>
+                                                        <div className="overflow-hidden">
+                                                            <div className="bg-muted/10 border-t border-border/40 flex flex-col">
+                                                                {c.locations.map((loc, locIdx) => (
+                                                                    <div
+                                                                        key={`${loc.layerInd}-${locIdx}`}
+                                                                        className="flex items-center justify-between px-3 py-2 text-xs border-b border-border/40 last:border-0 hover:bg-muted/30 cursor-pointer transition-colors group"
+                                                                        onMouseEnter={() => handleLocationHover(loc)}
+                                                                        onMouseLeave={() => handleLocationHover(null)}
+                                                                    >
+                                                                        <div className="flex items-center gap-2.5">
+                                                                            <LayerIcon className="size-3 text-muted-foreground/70 group-hover:text-foreground transition-colors shrink-0" />
+                                                                            <span className="truncate text-muted-foreground group-hover:text-foreground transition-colors max-w-[120px]" title={loc.layerName}>{formatLayerName(loc)}</span>
+                                                                        </div>
+                                                                        <div onClick={(e) => e.stopPropagation()}>
+                                                                            <AdvancedColorPicker
+                                                                                color={c.hex!}
+                                                                                onChange={(val) => handleInstanceUpdate(loc, val)}
+                                                                                disableGradient
+                                                                                onOpenChange={(open) => !open && handleCommit()}
+                                                                                className="h-7 w-auto min-w-[90px] border border-border/30 bg-background/50 hover:bg-background rounded-full pl-1 pr-3 gap-2 flex-row-reverse shadow-sm transition-all scale-95 hover:scale-100 opacity-60 group-hover:opacity-100"
+                                                                            >
+                                                                                <div
+                                                                                    className="size-4 rounded-full shadow-sm cursor-pointer hover:scale-110 transition-transform shrink-0 ring-1 ring-black/10 dark:ring-white/20"
+                                                                                    style={{ backgroundColor: c.hex }}
+                                                                                />
+                                                                            </AdvancedColorPicker>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         )}
 
                         {/* Gradient Instances */}
                         {gradients.length > 0 && (
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-3">
                                 <div
-                                    className="flex items-center justify-between cursor-pointer hover:bg-muted/50 p-1 rounded"
+                                    className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
                                     onClick={() => toggleSection('gradients')}
                                 >
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Gradient Instances ({gradients.length})</span>
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Gradients ({gradients.length})</span>
                                     {sectionsExpanded.gradients ? <ChevronUp className="size-3 text-muted-foreground" /> : <ChevronDown className="size-3 text-muted-foreground" />}
                                 </div>
 
-                                {sectionsExpanded.gradients && gradients.map((c, idx) => {
-                                    const isExpanded = expandedItem?.type === 'gradient' && expandedItem?.index === idx;
-                                    const gradientBackground = c.stops ? `linear-gradient(to right, ${c.stops.map(s => `${s.hex} ${s.offset * 100}%`).join(', ')}` : 'transparent';
-                                    const belongsToSelectedLayer = colorBelongsToSelectedLayer(c);
+                                {sectionsExpanded.gradients && (
+                                    <div className="flex flex-col gap-2">
+                                        {gradients.map((c, idx) => {
+                                            const isExpanded = expandedItem?.type === 'gradient' && expandedItem?.index === idx;
+                                            const gradientBackground = c.stops ? `linear-gradient(to right, ${c.stops.map(s => `${s.hex} ${s.offset * 100}%`).join(', ')}` : 'transparent';
+                                            const belongsToSelectedLayer = colorBelongsToSelectedLayer(c);
 
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className={cn(
-                                                "border rounded-lg shadow-sm bg-card overflow-hidden transition-all",
-                                                belongsToSelectedLayer && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background"
-                                            )}
-                                            onMouseEnter={() => handleColorHover(c)}
-                                            onMouseLeave={() => handleColorHover(null)}
-                                        >
-                                            <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => toggleExpand('gradient', idx)}>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-6 text-muted-foreground">
-                                                        <GripHorizontal className="size-4" />
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className={cn(
+                                                        "border border-border/60 rounded-xl shadow-sm bg-card/50 overflow-hidden transition-all duration-300",
+                                                        belongsToSelectedLayer && "ring-1 ring-primary border-primary/50 bg-primary/5",
+                                                        isExpanded && "bg-card shadow-md ring-1 ring-border"
+                                                    )}
+                                                    onMouseEnter={() => handleColorHover(c)}
+                                                    onMouseLeave={() => handleColorHover(null)}
+                                                >
+                                                    <div className="flex items-center justify-between p-2 pl-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => toggleExpand('gradient', idx)}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-1 rounded bg-muted/20">
+                                                                <GripHorizontal className="size-3.5 text-muted-foreground" />
+                                                            </div>
+                                                            <span className={cn(
+                                                                "text-xs font-medium text-foreground",
+                                                                belongsToSelectedLayer && "text-primary font-semibold"
+                                                            )}>
+                                                                {c.count > 1 ? `Gradient Group (${c.count})` : c.locations[0]?.layerName || 'Gradient'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-6 w-20 rounded-md border shadow-sm ring-1 ring-black/5 dark:ring-white/10" style={{ background: gradientBackground }} />
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/70 hover:text-foreground">
+                                                                {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                    <span className={cn(
-                                                        "text-xs font-medium",
-                                                        belongsToSelectedLayer && "text-amber-500"
+
+                                                    {/* Expanded Gradient */}
+                                                    <div className={cn(
+                                                        "grid transition-all duration-300 ease-in-out",
+                                                        isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                                                     )}>
-                                                        {c.count > 1 ? `Gradient Group (${c.count})` : c.locations[0]?.layerName || 'Gradient'}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="h-4 w-16 rounded border shadow-sm" style={{ background: gradientBackground }} />
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
-                                                        {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                                                    </Button>
-                                                </div>
-                                            </div>
+                                                        <div className="overflow-hidden">
+                                                            <div className="bg-muted/10 border-t border-border/40 p-3 flex flex-col gap-3">
+                                                                {/* Stops */}
+                                                                {c.stops?.map((stop, stopIdx) => (
+                                                                    <div key={stopIdx} className="flex items-center justify-between text-xs group">
+                                                                        <span className="text-muted-foreground font-medium group-hover:text-foreground transition-colors">Stop {stopIdx + 1}</span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {/* Offset Input */}
+                                                                            <div className="flex items-center bg-background border border-border/50 rounded-md px-2 h-7 w-16 focus-within:ring-1 focus-within:ring-primary/50 transition-shadow">
+                                                                                <input
+                                                                                    className="bg-transparent w-full text-right outline-none font-mono text-[10px]"
+                                                                                    type="number"
+                                                                                    min={0}
+                                                                                    max={100}
+                                                                                    value={Math.round(stop.offset * 100)}
+                                                                                    onChange={(e) => {
+                                                                                        const val = parseInt(e.target.value);
+                                                                                        if (!isNaN(val)) {
+                                                                                            handleGradientOffsetUpdate(c, stop.index, Math.max(0, Math.min(100, val)) / 100);
+                                                                                        }
+                                                                                    }}
+                                                                                    onBlur={handleCommit}
+                                                                                />
+                                                                                <span className="text-muted-foreground text-[10px] ml-0.5">%</span>
+                                                                            </div>
 
-                                            {isExpanded && c.stops && (
-                                                <div className="bg-muted/10 border-t p-3 flex flex-col gap-3">
-                                                    {/* Stops */}
-                                                    {c.stops.map((stop, stopIdx) => (
-                                                        <div key={stopIdx} className="flex items-center justify-between text-xs">
-                                                            <span className="text-muted-foreground font-medium">Stop {stopIdx + 1}</span>
-                                                            <div className="flex items-center gap-2">
-                                                                {/* Offset Input */}
-                                                                <div className="flex items-center bg-muted/50 border rounded-md px-2 h-7 w-16">
-                                                                    <input
-                                                                        className="bg-transparent w-full text-right outline-none font-mono text-[10px]"
-                                                                        type="number"
-                                                                        min={0}
-                                                                        max={100}
-                                                                        value={Math.round(stop.offset * 100)}
-                                                                        onChange={(e) => {
-                                                                            const val = parseInt(e.target.value);
-                                                                            if (!isNaN(val)) {
-                                                                                handleGradientOffsetUpdate(c, stop.index, Math.max(0, Math.min(100, val)) / 100);
-                                                                            }
-                                                                        }}
-                                                                        onBlur={handleCommit}
-                                                                    />
-                                                                </div>
-
-                                                                {/* Color Pill */}
-                                                                <AdvancedColorPicker
-                                                                    color={stop.hex}
-                                                                    onChange={(val) => handleGradientStopUpdate(c, stop.index, val)}
-                                                                    disableGradient
-                                                                    onOpenChange={(open) => !open && handleCommit()}
-                                                                    className="h-7 w-auto border-0 bg-muted/50 rounded-full pl-1 pr-3 gap-2 flex-row-reverse min-w-[90px]"
-                                                                >
-                                                                    <div className="size-5 rounded-full border shadow-sm bg-current cursor-pointer hover:scale-110 transition-transform shrink-0" style={{ color: stop.hex }} />
-                                                                </AdvancedColorPicker>
+                                                                            {/* Color Pill */}
+                                                                            <div onClick={(e) => e.stopPropagation()}>
+                                                                                <AdvancedColorPicker
+                                                                                    color={stop.hex}
+                                                                                    onChange={(val) => handleGradientStopUpdate(c, stop.index, val)}
+                                                                                    disableGradient
+                                                                                    onOpenChange={(open) => !open && handleCommit()}
+                                                                                    className="h-7 w-auto min-w-[90px] border border-border/40 bg-background/80 hover:bg-muted/50 rounded-full pl-1 pr-3 gap-2 flex-row-reverse shadow-sm transition-all"
+                                                                                >
+                                                                                    <div
+                                                                                        className="size-5 rounded-full shadow-sm cursor-pointer hover:scale-110 transition-transform shrink-0 ring-1 ring-black/10 dark:ring-white/20"
+                                                                                        style={{ backgroundColor: stop.hex }}
+                                                                                    />
+                                                                                </AdvancedColorPicker>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
                                                         </div>
-                                                    ))}
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         )}
 

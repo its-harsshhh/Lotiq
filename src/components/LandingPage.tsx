@@ -1,17 +1,170 @@
+import { useRef } from 'react';
 import { DropZone } from "./DropZone";
 import { UrlLoader } from "./UrlLoader";
 import { PasteHandler } from "./PasteHandler";
-import { Layers, Coffee, Shield, Zap, Lock } from "lucide-react";
-import { motion } from "framer-motion";
+import { Layers, Coffee, Shield, Zap, Lock, Palette, Eye, MousePointer2 } from "lucide-react";
+import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate, useScroll } from "framer-motion";
 import { Button } from "./ui/button";
 import { LandingNavbar } from "./LandingNavbar";
 import { FeedbackSection } from "./FeedbackSection";
+import { cn } from "@/lib/utils";
+
+// --- Local Components for Interaction ---
+
+const TiltCard = ({ children, className, ...props }: any) => {
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    const mouseXSpring = useSpring(x, { stiffness: 500, damping: 100 });
+    const mouseYSpring = useSpring(y, { stiffness: 500, damping: 100 });
+
+    function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
+        const { left, top, width, height } = currentTarget.getBoundingClientRect();
+        const xVal = clientX - left;
+        const yVal = clientY - top;
+        const xPct = xVal / width - 0.5;
+        const yPct = yVal / height - 0.5;
+
+        x.set(xPct);
+        y.set(yPct);
+        mouseX.set(xVal);
+        mouseY.set(yVal);
+    }
+
+    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7deg", "-7deg"]);
+    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
+
+    // Spotlight gradient that follows mouse - drastically reduced opacity for subtle effect
+    const spotlight = useMotionTemplate`radial-gradient(400px circle at ${mouseX}px ${mouseY}px, rgba(255,255,255,0.03), transparent 80%)`;
+
+    return (
+        <motion.div
+            {...props}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => { x.set(0); y.set(0); }}
+            style={{
+                rotateX,
+                rotateY,
+                transformStyle: "preserve-3d",
+                perspective: 1000,
+                ...props.style
+            }}
+            className={cn("group relative", className)}
+        >
+            {/* Spotlight Glare */}
+            <motion.div
+                className="absolute inset-0 z-10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                style={{ background: spotlight }}
+            />
+
+            {/* Inner content wrapper to preserve z-axis sorting */}
+            <div style={{ transform: "translateZ(20px)" }} className="h-full w-full relative z-0">
+                {children}
+            </div>
+        </motion.div>
+    );
+};
+
+const SpotlightCard = ({ children, className, ...props }: any) => {
+    const divRef = useRef<HTMLDivElement>(null);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!divRef.current) return;
+        const rect = divRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        divRef.current.style.setProperty("--mouse-x", `${x}px`);
+        divRef.current.style.setProperty("--mouse-y", `${y}px`);
+        divRef.current.style.setProperty("--opacity", "1");
+    };
+
+    const handleMouseLeave = () => {
+        if (!divRef.current) return;
+        divRef.current.style.setProperty("--opacity", "0");
+    };
+
+    return (
+        <motion.div
+            ref={divRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            {...props}
+            className={cn(
+                "relative h-full overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors group/spotlight",
+                className
+            )}
+        >
+            {/* Spotlight Overlay */}
+            <div
+                className="pointer-events-none absolute -inset-px opacity-0 transition duration-300 z-10"
+                style={{
+                    opacity: `var(--opacity, 0)`,
+                    background: `radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(99,102,241,0.1), transparent 40%)`,
+                }}
+            />
+            {/* Border Highlight */}
+            <div
+                className="pointer-events-none absolute -inset-px opacity-0 transition duration-300 z-20"
+                style={{
+                    opacity: `var(--opacity, 0)`,
+                    background: `radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(99,102,241,0.4), transparent 40%)`,
+                    maskImage: `linear-gradient(black, black) content-box, linear-gradient(black, black)`,
+                    WebkitMaskImage: `linear-gradient(black, black) content-box, linear-gradient(black, black)`,
+                    maskComposite: `exclude`,
+                    WebkitMaskComposite: `xor`,
+                    padding: '1px' // Width of the border
+                }}
+            />
+
+            <div className="relative z-0 h-full">
+                {children}
+            </div>
+        </motion.div>
+    );
+};
+
+const ParallaxBackground = () => {
+    const { scrollY } = useScroll();
+    const y1 = useTransform(scrollY, [0, 1000], [0, 200]);
+    const y2 = useTransform(scrollY, [0, 1000], [0, -150]);
+
+    return (
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+            {/* Animated Gradient Orbs */}
+            <motion.div
+                style={{ y: y1, opacity: 0.4 }}
+                className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-indigo-500/20 blur-[100px] dark:bg-indigo-500/10"
+            />
+            <motion.div
+                style={{ y: y2, opacity: 0.4 }}
+                className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-purple-500/20 blur-[100px] dark:bg-purple-500/10"
+            />
+
+            {/* Grid Pattern with Parallax */}
+            <motion.div
+                style={{ y: useTransform(scrollY, [0, 1000], [0, 50]) }}
+                className="absolute inset-0 h-full w-full bg-white dark:bg-zinc-950 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"
+            />
+        </div>
+    );
+};
 
 export const LandingPage = () => {
     // Animation variants for progressive disclosure
     const fadeInUp = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+        hidden: { opacity: 0, y: 30 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                type: "spring" as const,
+                stiffness: 100,
+                damping: 20,
+                mass: 0.5
+            }
+        }
     };
 
     const staggerContainer = {
@@ -19,7 +172,8 @@ export const LandingPage = () => {
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.2
+                staggerChildren: 0.15,
+                delayChildren: 0.1
             }
         }
     };
@@ -30,44 +184,54 @@ export const LandingPage = () => {
 
             <LandingNavbar />
 
-            {/* Dot Pattern Background - Reduced Contrast */}
-            <div aria-hidden="true" className="fixed inset-0 z-0 h-full w-full bg-white dark:bg-zinc-950 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+            <ParallaxBackground />
 
             <main className="relative z-10 w-full max-w-4xl mx-auto px-6 py-16 flex flex-col items-center flex-grow pt-32">
 
                 {/* 1. HERO SECTION */}
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
                     className="text-center space-y-6 max-w-2xl mx-auto mb-10"
                 >
-                    <div className="inline-flex items-center rounded-full border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-3 py-1 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 mb-2 tracking-wide uppercase" role="status">
+                    <motion.div
+                        variants={fadeInUp}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="inline-flex items-center rounded-full border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-3 py-1 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 mb-2 tracking-wide uppercase cursor-default"
+                        role="status"
+                    >
+                        <span className="relative flex h-2 w-2 mr-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                        </span>
                         v2.0 Beta · Tweak, Crop, and Export in seconds
-                    </div>
+                    </motion.div>
 
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.1]">
+                    <motion.h1 variants={fadeInUp} className="text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.1]">
                         Edit Lottie files <br />
-                        <span className="text-indigo-600 dark:text-indigo-400">in seconds, not minutes.</span>
-                    </h1>
+                        <span className="text-indigo-600 dark:text-indigo-400 inline-block">in seconds, not minutes.</span>
+                    </motion.h1>
 
-                    <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
+                    <motion.p variants={fadeInUp} className="text-base text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
                         Lotiq lets you inspect, tweak, and export animations in seconds. Runs entirely in your browser.
-                    </p>
+                    </motion.p>
 
                 </motion.div>
 
                 {/* 2. DROP ZONE SECTION */}
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2, duration: 0.6 }}
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.8, type: "spring", bounce: 0.4 }}
                     className="w-full max-w-xl mx-auto mb-16"
                 >
                     <div className="relative group rounded-3xl p-1 bg-gradient-to-br from-indigo-50/50 via-white to-zinc-50 dark:from-indigo-500/10 dark:via-zinc-900 dark:to-zinc-900 shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 hover:shadow-indigo-200/20 dark:hover:shadow-indigo-500/10 transition-all duration-500">
                         <div className="absolute inset-0 bg-white dark:bg-zinc-900 rounded-3xl opacity-60 backdrop-blur-xl"></div>
-                        <div className="relative rounded-[20px] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-100 dark:border-zinc-800 p-8 flex flex-col gap-6 items-center text-center transition-all duration-300 group-hover:border-indigo-100 dark:group-hover:border-indigo-900/50 group-hover:scale-[1.01] cursor-pointer">
+                        <div className="relative rounded-[20px] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-100 dark:border-zinc-800 p-8 flex flex-col gap-6 items-center text-center transition-all duration-300 group-hover:border-indigo-100 dark:group-hover:border-indigo-900/50 cursor-pointer">
 
+                            {/* ... DropZone contents ... */}
                             <div className="w-full">
                                 <DropZone />
                             </div>
@@ -85,93 +249,138 @@ export const LandingPage = () => {
                     </div>
                 </motion.div>
 
-                {/* 3. WHY LOTIQ SECTION - Compact & Outcome focused */}
+                {/* 3. WHY LOTIQ SECTION */}
                 <motion.div
                     id="features"
                     variants={staggerContainer}
                     initial="hidden"
                     whileInView="visible"
-                    viewport={{ once: true, margin: "-100px" }}
-                    className="w-full max-w-2xl mx-auto text-center space-y-12 mb-32"
+                    viewport={{ once: true, margin: "-50px" }}
+                    className="w-full max-w-3xl mx-auto text-center space-y-10 mb-6"
                 >
                     <motion.h2 variants={fadeInUp} className="text-2xl font-bold text-zinc-900 dark:text-white">Why Lotiq?</motion.h2>
 
-                    <div className="flex flex-col md:flex-row justify-between gap-8 text-left">
-                        <motion.div variants={fadeInUp} className="flex-1 space-y-2">
-                            <h3 className="font-bold text-zinc-900 dark:text-zinc-100">Instant tweaks</h3>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Change colors, layers, and canvas in seconds.</p>
-                        </motion.div>
-
-                        <motion.div variants={fadeInUp} className="flex-1 space-y-2">
-                            <h3 className="font-bold text-zinc-900 dark:text-zinc-100">Live preview</h3>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">See changes instantly and export with confidence.</p>
-                        </motion.div>
-
-                        <motion.div variants={fadeInUp} className="flex-1 space-y-2">
-                            <h3 className="font-bold text-zinc-900 dark:text-zinc-100">Workflow friendly</h3>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Fix small things without leaving your flow.</p>
-                        </motion.div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                        {[
+                            {
+                                title: 'Instant tweaks',
+                                icon: Palette,
+                                text: "Change colors, layers, and canvas in seconds.",
+                                iconBg: 'bg-zinc-50 dark:bg-zinc-800',
+                                iconColor: 'text-zinc-600 dark:text-zinc-400'
+                            },
+                            {
+                                title: 'Live preview',
+                                icon: Eye,
+                                text: "See changes instantly and export with confidence.",
+                                iconBg: 'bg-zinc-50 dark:bg-zinc-800',
+                                iconColor: 'text-zinc-600 dark:text-zinc-400'
+                            },
+                            {
+                                title: 'Workflow friendly',
+                                icon: MousePointer2,
+                                text: "Fix small things without leaving your flow.",
+                                iconBg: 'bg-zinc-50 dark:bg-zinc-800',
+                                iconColor: 'text-zinc-600 dark:text-zinc-400'
+                            }
+                        ].map((item, i) => (
+                            <TiltCard
+                                key={i}
+                                variants={fadeInUp}
+                                whileHover={{ y: -5 }}
+                                className="h-full p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all"
+                            >
+                                <div className="flex flex-col h-full gap-6">
+                                    <div className="flex-shrink-0">
+                                        <div className={cn("p-2 w-fit rounded-lg border shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300", item.iconBg, "border-zinc-100 dark:border-zinc-800")}>
+                                            <item.icon className={cn("w-5 h-5", item.iconColor)} />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{item.title}</h3>
+                                        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                            {item.text}
+                                        </p>
+                                    </div>
+                                </div>
+                            </TiltCard>
+                        ))}
                     </div>
                 </motion.div>
 
-                {/* 4. FEATURE STRIP (Stacked Rows) - Tighter spacing */}
+                {/* 4. FEATURE STRIP */}
                 <motion.div
                     variants={staggerContainer}
                     initial="hidden"
                     whileInView="visible"
-                    viewport={{ once: true, margin: "-100px" }}
+                    viewport={{ once: true, margin: "-50px" }}
                     className="w-full max-w-3xl mx-auto space-y-12 mb-32"
                 >
-                    <motion.div variants={fadeInUp} className="border-t border-zinc-100" />
-
-                    <div className="space-y-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Feature 1 */}
-                        <motion.div variants={fadeInUp} className="flex flex-col md:flex-row items-start gap-6">
-                            <div className="flex-shrink-0 pt-1">
-                                <div className="p-2 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800">
-                                    <div className="w-5 h-5 rounded-full bg-indigo-500 shadow-sm" />
+                        <TiltCard
+                            variants={fadeInUp}
+                            whileHover={{ y: -5 }}
+                            className="h-full p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all"
+                        >
+                            <div className="flex flex-col h-full gap-6">
+                                <div className="flex-shrink-0">
+                                    <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                        <div className="w-5 h-5 rounded-full bg-indigo-500 shadow-sm" />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Global color editing</h3>
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                        Automatically detects all colors in your animation. Change once, update everywhere.
+                                    </p>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Global color editing</h3>
-                                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-md">
-                                    Automatically detects all colors in your animation. Change once, update everywhere.
-                                </p>
-                            </div>
-                        </motion.div>
+                        </TiltCard>
 
                         {/* Feature 2 */}
-                        <motion.div variants={fadeInUp} className="flex flex-col md:flex-row items-start gap-6">
-                            <div className="flex-shrink-0 pt-1">
-                                <div className="p-2 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800">
-                                    <Layers className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+                        <TiltCard
+                            variants={fadeInUp}
+                            whileHover={{ y: -5 }}
+                            className="h-full p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all"
+                        >
+                            <div className="flex flex-col h-full gap-6">
+                                <div className="flex-shrink-0">
+                                    <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                        <Layers className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Layer visibility</h3>
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                        Hide or remove layers without touching keyframes or complicating your project file.
+                                    </p>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Layer visibility</h3>
-                                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-md">
-                                    Hide or remove layers without touching keyframes or complicating your project file.
-                                </p>
-                            </div>
-                        </motion.div>
+                        </TiltCard>
 
                         {/* Feature 3 */}
-                        <motion.div variants={fadeInUp} className="flex flex-col md:flex-row items-start gap-6">
-                            <div className="flex-shrink-0 pt-1">
-                                <div className="p-2 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800">
-                                    <svg className="w-5 h-5 text-zinc-400 dark:text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M15 3v18" /><path d="M3 15h18" /></svg>
+                        <TiltCard
+                            variants={fadeInUp}
+                            whileHover={{ y: -5 }}
+                            className="h-full p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all"
+                        >
+                            <div className="flex flex-col h-full gap-6">
+                                <div className="flex-shrink-0">
+                                    <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                        <svg className="w-5 h-5 text-zinc-400 dark:text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M15 3v18" /><path d="M3 15h18" /></svg>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Canvas fixes</h3>
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                        Adjust width, height, and padding. Standardize your Lottie dimensions without reopening AE.
+                                    </p>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Canvas fixes</h3>
-                                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-md">
-                                    Adjust width, height, and padding. Standardize your Lottie dimensions without reopening AE.
-                                </p>
-                            </div>
-                        </motion.div>
+                        </TiltCard>
                     </div>
 
-                    <motion.div variants={fadeInUp} className="border-t border-zinc-100" />
                 </motion.div>
 
                 {/* 5. TRUST & PRIVACY - Aceternity Style Bento Grid */}
@@ -190,12 +399,12 @@ export const LandingPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Card 1 */}
-                        <motion.div
+                        <SpotlightCard
                             whileHover={{ y: -5 }}
-                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/10 hover:border-indigo-100 dark:hover:border-indigo-900/50"
+                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/10 hover:border-indigo-100 dark:hover:border-indigo-900/50"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="relative z-10 flex flex-col gap-4">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 dark:from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="relative z-10 flex flex-col gap-8 p-8 h-full">
                                 <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                                     <Shield className="w-5 h-5 text-indigo-500" />
                                 </div>
@@ -206,17 +415,17 @@ export const LandingPage = () => {
                                     </p>
                                 </div>
                             </div>
-                        </motion.div>
+                        </SpotlightCard>
 
                         {/* Card 2 */}
-                        <motion.div
+                        <SpotlightCard
                             whileHover={{ y: -5 }}
-                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-emerald-100/50 dark:hover:shadow-emerald-900/10 hover:border-emerald-100 dark:hover:border-emerald-900/50"
+                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/10 hover:border-indigo-100 dark:hover:border-indigo-900/50"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="relative z-10 flex flex-col gap-4">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 dark:from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="relative z-10 flex flex-col gap-8 p-8 h-full">
                                 <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                    <Zap className="w-5 h-5 text-emerald-500" />
+                                    <Zap className="w-5 h-5 text-indigo-500" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-zinc-900 dark:text-white mb-1">No Accounts</h3>
@@ -225,17 +434,17 @@ export const LandingPage = () => {
                                     </p>
                                 </div>
                             </div>
-                        </motion.div>
+                        </SpotlightCard>
 
                         {/* Card 3 */}
-                        <motion.div
+                        <SpotlightCard
                             whileHover={{ y: -5 }}
-                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-amber-100/50 dark:hover:shadow-amber-900/10 hover:border-amber-100 dark:hover:border-amber-900/50"
+                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/10 hover:border-indigo-100 dark:hover:border-indigo-900/50"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="relative z-10 flex flex-col gap-4">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 dark:from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="relative z-10 flex flex-col gap-8 p-8 h-full">
                                 <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                    <Lock className="w-5 h-5 text-amber-500" />
+                                    <Lock className="w-5 h-5 text-indigo-500" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-zinc-900 dark:text-white mb-1">Private by Default</h3>
@@ -244,7 +453,7 @@ export const LandingPage = () => {
                                     </p>
                                 </div>
                             </div>
-                        </motion.div>
+                        </SpotlightCard>
                     </div>
                 </motion.div>
 

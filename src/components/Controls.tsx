@@ -30,7 +30,7 @@ export const Controls = ({ onCrop }: ControlsProps) => {
     };
 
     return (
-        <div className="h-16 border-t bg-card flex items-center px-4 gap-4">
+        <div className="h-16 border-t border-border/40 bg-background/80 backdrop-blur-xl flex items-center px-4 gap-4 z-10 transition-all">
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={togglePlay}>
                     {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}

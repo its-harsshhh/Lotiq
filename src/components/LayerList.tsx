@@ -68,23 +68,23 @@ const ContextMenu = ({
     return (
         <div
             ref={menuRef}
-            className="fixed z-50 min-w-[200px] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xl py-1 animate-in fade-in-0 zoom-in-95"
+            className="fixed z-50 min-w-[200px] bg-popover text-popover-foreground border border-border rounded-lg shadow-xl py-1 animate-in fade-in-0 zoom-in-95"
             style={{ left: x, top: y }}
         >
-            <div className="px-3 py-2 border-b border-gray-200 dark:border-zinc-700">
-                <span className="text-xs text-gray-500 dark:text-zinc-400 truncate block max-w-[180px]">{layerName}</span>
+            <div className="px-3 py-2 border-b border-border">
+                <span className="text-xs text-muted-foreground truncate block max-w-[180px]">{layerName}</span>
             </div>
             {menuItems.map((item, idx) => {
                 if (item.type === 'separator') {
-                    return <div key={idx} className="h-px bg-gray-200 dark:bg-zinc-700 my-1" />;
+                    return <div key={idx} className="h-px bg-border my-1" />;
                 }
                 const Icon = item.icon;
                 return (
                     <button
                         key={idx}
                         className={cn(
-                            "w-full px-3 py-2 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors",
-                            item.danger && "text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10"
+                            "w-full px-3 py-2 flex items-center gap-3 text-sm hover:bg-accent hover:text-accent-foreground transition-colors",
+                            item.danger ? "text-destructive hover:text-destructive hover:bg-destructive/10" : "text-popover-foreground"
                         )}
                         onClick={(e) => {
                             e.stopPropagation();
@@ -95,7 +95,7 @@ const ContextMenu = ({
                         <Icon className="size-4" />
                         <span className="flex-1 text-left">{item.label}</span>
                         {item.shortcut && (
-                            <span className="text-xs text-gray-400 dark:text-zinc-500">{item.shortcut}</span>
+                            <span className="text-xs text-muted-foreground opacity-70">{item.shortcut}</span>
                         )}
                     </button>
                 );
@@ -354,15 +354,16 @@ export const LayerList = () => {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
+            {/* Header */}
             <div
-                className="p-4 border-b border-gray-200 dark:border-zinc-700 flex items-center gap-2 font-medium bg-gray-50 dark:bg-zinc-800/50 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors text-gray-900 dark:text-gray-100"
+                className="px-4 py-3 border-b flex items-center gap-2 font-medium cursor-pointer hover:bg-muted/50 transition-colors text-foreground select-none"
                 onClick={() => setIsExpanded(!isExpanded)}
             >
-                <LayersIcon className="size-4" />
-                Layers
+                <LayersIcon className="size-4 text-muted-foreground" />
+                <span className="text-sm">Layers</span>
                 <div className="ml-auto flex items-center gap-2">
-                    <span className="text-xs text-gray-500 dark:text-zinc-400">{lottie.layers.length}</span>
-                    {isExpanded ? <ChevronDown className="size-3.5 text-gray-500 dark:text-zinc-400" /> : <ChevronRight className="size-3.5 text-gray-500 dark:text-zinc-400" />}
+                    <span className="text-xs text-muted-foreground font-normal">{lottie.layers.length}</span>
+                    {isExpanded ? <ChevronDown className="size-3.5 text-muted-foreground" /> : <ChevronRight className="size-3.5 text-muted-foreground" />}
                 </div>
             </div>
 
@@ -387,13 +388,13 @@ export const LayerList = () => {
                                     onContextMenu={(e) => handleContextMenu(e, layer.ind)}
                                     onDoubleClick={(e) => handleDoubleClick(e, layer.ind)}
                                     className={cn(
-                                        "flex items-center gap-1.5 px-2 py-1.5 text-sm border-b border-gray-100 dark:border-zinc-800 group transition-all cursor-pointer",
+                                        "flex items-center gap-2 px-3 py-2 text-sm group transition-colors cursor-pointer border-l-2",
                                         isSelected
-                                            ? "bg-blue-600 text-white"
-                                            : "hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-900 dark:text-gray-100",
-                                        isHighlighted && !isSelected && "bg-amber-100 dark:bg-amber-500/20 ring-1 ring-inset ring-amber-400 dark:ring-amber-500/50"
+                                            ? "bg-primary/10 border-primary text-primary font-medium"
+                                            : "border-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground",
+                                        isHighlighted && !isSelected && "bg-amber-100 dark:bg-amber-500/20"
                                     )}
-                                    style={{ paddingLeft: `${8 + depth * 16}px` }}
+                                    style={{ paddingLeft: `${12 + depth * 16}px` }}
                                 >
                                     {/* Expand/Collapse Chevron */}
                                     <div className="w-4 shrink-0 flex items-center justify-center">
@@ -401,8 +402,8 @@ export const LayerList = () => {
                                             <button
                                                 onClick={(e) => toggleLayerCollapse(layer.ind, e)}
                                                 className={cn(
-                                                    "p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10",
-                                                    isSelected && "hover:bg-white/20"
+                                                    "p-0.5 rounded-sm hover:bg-black/10 dark:hover:bg-white/10 transition-colors",
+                                                    isSelected && "hover:bg-primary/20"
                                                 )}
                                             >
                                                 {isCollapsed ? (
@@ -417,7 +418,7 @@ export const LayerList = () => {
                                     </div>
 
                                     {/* Layer Type Icon */}
-                                    {getLayerIcon(layer.ty, isSelected)}
+                                    {getLayerIcon(layer.ty, false)}
 
                                     {/* Layer Name */}
                                     <div className="flex-1 min-w-0">
@@ -429,15 +430,14 @@ export const LayerList = () => {
                                                 onBlur={saveName}
                                                 onKeyDown={handleKeyDownInput}
                                                 onClick={(e) => e.stopPropagation()}
-                                                className="h-5 text-xs px-1 py-0 bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-zinc-600"
+                                                className="h-6 text-xs px-1 py-0 bg-transparent border-primary/50 text-foreground"
                                             />
                                         ) : (
                                             <span
                                                 className={cn(
-                                                    "truncate block text-xs font-semibold",
+                                                    "truncate block text-xs",
                                                     layer.hd && "opacity-50 line-through"
                                                 )}
-                                                style={{ color: 'inherit' }}
                                             >
                                                 {layer.nm || `Layer ${layer.ind}`}
                                             </span>
@@ -445,20 +445,17 @@ export const LayerList = () => {
                                     </div>
 
                                     {/* Right Side - Eye Icon */}
-                                    <button
-                                        className={cn(
-                                            "p-1 rounded transition-all shrink-0",
-                                            layer.hd
-                                                ? (isSelected ? "text-white/60" : "text-zinc-500 dark:text-zinc-400")
-                                                : (isSelected
-                                                    ? "text-white/80 opacity-0 group-hover:opacity-100"
-                                                    : "text-zinc-600 dark:text-zinc-400 opacity-0 group-hover:opacity-100"
-                                                )
-                                        )}
-                                        onClick={(e) => handleToggle(layer.ind, e)}
-                                    >
-                                        {layer.hd ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-                                    </button>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                                        <button
+                                            className={cn(
+                                                "p-1 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors",
+                                                layer.hd && "opacity-100 text-muted-foreground"
+                                            )}
+                                            onClick={(e) => handleToggle(layer.ind, e)}
+                                        >
+                                            {layer.hd ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                                        </button>
+                                    </div>
                                 </div>
                             );
                         })}

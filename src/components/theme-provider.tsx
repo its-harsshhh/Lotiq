@@ -34,17 +34,24 @@ export function ThemeProvider({
 
         root.classList.remove("light", "dark")
 
+        let effectiveTheme = theme
         if (theme === "system") {
             const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
                 .matches
                 ? "dark"
                 : "light"
-
-            root.classList.add(systemTheme)
-            return
+            effectiveTheme = systemTheme
         }
 
-        root.classList.add(theme)
+        root.classList.add(effectiveTheme)
+
+        // Update Favicon based on effective theme
+        const faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+        if (faviconLink) {
+            faviconLink.href = effectiveTheme === 'dark'
+                ? '/logo/icon-dark-mode.png'
+                : '/logo/icon-light-mode.png';
+        }
     }, [theme])
 
     const value = {

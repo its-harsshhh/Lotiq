@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from "framer-motion";
 import { Pencil, Coffee } from 'lucide-react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
@@ -92,9 +93,16 @@ export const MainLayout = () => {
 
     if (isEditorMode) {
         return (
-            <div className="h-screen w-full flex flex-col">
-                <header className="border-b h-14 flex items-center px-4 justify-between bg-card z-20 relative">
-                    <div
+            <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="h-screen w-full flex flex-col bg-background text-foreground"
+            >
+                <header className="h-14 flex items-center px-4 justify-between bg-background/80 backdrop-blur-xl border-b border-border/40 z-20 relative select-none">
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         className="font-bold text-xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => {
                             const hasEdits = history.length > 1;
@@ -105,50 +113,71 @@ export const MainLayout = () => {
                             }
                         }}
                     >
-                        Lotiq
-                    </div>
-                    <label className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold text-sm group flex items-center gap-2 cursor-pointer">
+                        {/* Logo with better dark mode handling */}
+                        <div className="relative h-7 w-auto">
+                            <img src="/logo/logo-light-mode.svg" alt="Lotiq" className="h-full w-auto dark:hidden" />
+                            <img src="/logo/logo-dark-mode.svg" alt="Lotiq" className="h-full w-auto hidden dark:block" />
+                        </div>
+                    </motion.div>
+
+                    {/* Filename Input - Centered with hover effect */}
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 group">
                         <input
-                            className="bg-transparent text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 min-w-[100px] hover:bg-muted/50 transition-colors"
+                            className="bg-transparent text-center font-medium text-sm focus:outline-none focus:bg-muted/50 rounded-md px-2 py-1 min-w-[120px] transition-all hover:bg-muted/30 placeholder:text-muted-foreground/50"
                             value={editingName !== null ? editingName : fileName}
                             onChange={(e) => setEditingName(e.target.value)}
                             onBlur={handleNameBlur}
                             onKeyDown={handleNameKeyDown}
+                            spellCheck={false}
                         />
-                        <Pencil className="size-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </label>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            size="sm"
-                            className="h-9 text-xs gap-2 bg-[#FFDD00] text-black hover:bg-[#FFDD00]/90 font-bold border-0 hidden sm:flex"
-                            onClick={() => {
-                                window.open('https://buymeacoffee.com/harshpal', '_blank');
-                            }}
-                        >
-                            <Coffee className="size-3.5" />
-                            Buy me a coffee
-                        </Button>
+                        <Pencil className="size-3 text-muted-foreground opacity-0 group-hover:opacity-50 transition-opacity" />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button
+                                size="sm"
+                                className="relative overflow-hidden h-8 gap-2 bg-gradient-to-r from-amber-300 to-orange-400 text-black hover:from-amber-400 hover:to-orange-500 font-semibold border-0 hidden sm:flex rounded-full px-4 shadow-lg shadow-orange-500/20 group transition-all"
+                                onClick={() => {
+                                    window.open('https://buymeacoffee.com/harshpal', '_blank');
+                                }}
+                            >
+                                <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-[100%]"
+                                    animate={{ translateX: ["-100%", "200%"] }}
+                                    transition={{
+                                        repeat: Infinity,
+                                        duration: 2.5,
+                                        ease: "easeInOut",
+                                        repeatDelay: 4
+                                    }}
+                                />
+                                <Coffee className="size-3.5 relative z-10" />
+                                <span className="text-xs relative z-10">Buy me a coffee</span>
+                            </Button>
+                        </motion.div>
+
+                        <div className="h-4 w-px bg-border/50 mx-1" /> {/* Divider */}
+
                         <ModeToggle />
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                // Check if there are unsaved changes
-                                // Logic: If history has more than 1 item (initial state) AND we haven't exported since last change
-                                // Actually simplistic: if we have history > 1 (meaning edits happened) and !hasExportedThisSession
-                                // But hasExportedThisSession resets on edit. So if !hasExportedThisSession, we might have unsaved changes.
-                                // But we need to distinguish "Active Session with Edits" vs "Just Loaded".
-                                // If history.length > 1, we definitely edited.
-                                const hasEdits = history.length > 1;
-                                if (hasEdits && !hasExportedThisSession) {
-                                    setShowCloseConfirm(true);
-                                } else {
-                                    window.location.reload();
-                                }
-                            }}
-                        >
-                            Close
-                        </Button>
+
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 text-muted-foreground hover:text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                onClick={() => {
+                                    const hasEdits = history.length > 1;
+                                    if (hasEdits && !hasExportedThisSession) {
+                                        setShowCloseConfirm(true);
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                }}
+                            >
+                                Close
+                            </Button>
+                        </motion.div>
                     </div>
                 </header>
 
@@ -171,7 +200,7 @@ export const MainLayout = () => {
                     <ResizableLayout
                         leftPanel={<InspectorLeft />}
                         centerPanel={
-                            <div className="h-full flex flex-col min-w-0 bg-muted/20 relative">
+                            <div className="h-full flex flex-col min-w-0 bg-zinc-50/50 dark:bg-zinc-950/50 relative">
                                 {lottie ? (
                                     <>
                                         <Player />
@@ -192,7 +221,7 @@ export const MainLayout = () => {
                 </div>
 
                 <CropModal open={isCropOpen} onClose={() => setIsCropOpen(false)} />
-            </div>
+            </motion.div>
         );
     }
 

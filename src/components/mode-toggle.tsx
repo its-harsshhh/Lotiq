@@ -1,21 +1,87 @@
 import { Moon, Sun } from "lucide-react"
 import { Button } from "./ui/button"
 import { useTheme } from "./theme-provider"
+import { motion, AnimatePresence } from "framer-motion"
+import { flushSync } from "react-dom"
 
 export function ModeToggle() {
     const { theme, setTheme } = useTheme()
+
+    const toggleTheme = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        const newTheme = theme === "light" ? "dark" : "light"
+
+        // @ts-ignore
+        if (!document.startViewTransition) {
+            setTheme(newTheme)
+            return
+        }
+
+        const x = e.clientX
+        const y = e.clientY
+        const endRadius = Math.hypot(
+            Math.max(x, innerWidth - x),
+            Math.max(y, innerHeight - y)
+        )
+
+        // @ts-ignore
+        const transition = document.startViewTransition(() => {
+            flushSync(() => {
+                setTheme(newTheme)
+            })
+        })
+
+        await transition.ready
+
+        const clipPath = [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${endRadius}px at ${x}px ${y}px)`,
+        ]
+
+        document.documentElement.animate(
+            {
+                clipPath: clipPath,
+            },
+            {
+                duration: 500,
+                easing: "ease-in-out",
+                pseudoElement: "::view-transition-new(root)",
+            }
+        )
+    }
+
 
     return (
         <Button
             variant="ghost"
             size="icon"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="rounded-full w-10 h-10 bg-white/50 backdrop-blur-sm border border-zinc-200 dark:bg-zinc-800/50 dark:border-zinc-700 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 transition-colors"
+            onClick={toggleTheme}
+            className="relative rounded-full w-10 h-10 overflow-hidden bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border-0"
         >
-            <div className="relative w-[1.2rem] h-[1.2rem]">
-                <Sun className="absolute h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] dark:rotate-0 dark:scale-100" />
-            </div>
+            <AnimatePresence mode="wait" initial={false}>
+                {theme === "dark" ? (
+                    <motion.div
+                        key="moon"
+                        initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                        animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                        exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="absolute inset-0 flex items-center justify-center"
+                    >
+                        <Moon className="h-5 w-5 text-zinc-100" />
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="sun"
+                        initial={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                        animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                        exit={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="absolute inset-0 flex items-center justify-center"
+                    >
+                        <Sun className="h-5 w-5 text-zinc-800" />
+                    </motion.div>
+                )}
+            </AnimatePresence>
             <span className="sr-only">Toggle theme</span>
         </Button>
     )
