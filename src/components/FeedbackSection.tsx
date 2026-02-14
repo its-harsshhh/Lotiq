@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { MessageSquare, Send, Loader2, CheckCircle2 } from "lucide-react";
+import { MessageSquare, Send, Loader2, CheckCircle2, ChevronDown } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 
 
 export const FeedbackSection = () => {
@@ -12,6 +13,8 @@ export const FeedbackSection = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [lastError, setLastError] = useState<string | null>(null);
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
 
     // FORM HANDLER
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -68,10 +71,16 @@ export const FeedbackSection = () => {
                 </p>
             </div>
 
-            <div className="group relative rounded-3xl p-1 bg-gradient-to-br from-indigo-50/50 via-white to-zinc-50 dark:from-indigo-500/10 dark:via-zinc-900 dark:to-zinc-900 shadow-xl shadow-zinc-200/50 dark:shadow-black/50 transition-all duration-500">
-                <div className="absolute inset-0 bg-white dark:bg-zinc-900 rounded-3xl opacity-60 backdrop-blur-xl"></div>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="group relative rounded-3xl p-px bg-gradient-to-br from-zinc-200 via-zinc-200 to-zinc-200 dark:from-zinc-800 dark:via-zinc-700 dark:to-zinc-800 hover:bg-gradient-to-br hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-500 shadow-xl shadow-zinc-200/50 dark:shadow-black/50"
+            >
+                <div className="absolute inset-0 bg-white dark:bg-zinc-950 rounded-3xl opacity-100 dark:opacity-95 backdrop-blur-xl"></div>
 
-                <div className="relative rounded-[20px] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-100 dark:border-zinc-800 p-8">
+                <div className="relative rounded-[23px] bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl p-8 transition-all duration-500 group-hover:bg-white/90 dark:group-hover:bg-black/40">
 
                     {isSuccess ? (
                         <motion.div
@@ -99,51 +108,90 @@ export const FeedbackSection = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label htmlFor="name" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Name</label>
+                                    <label htmlFor="name" className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 ml-1">Name</label>
                                     <Input
                                         id="name"
                                         name="name"
                                         placeholder="Your name"
                                         required
-                                        className="bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition-all h-11"
                                     />
+                                    <div className="h-4 pl-1">
+                                        <AnimatePresence>
+                                            {name.length > 2 && (
+                                                <motion.p
+                                                    initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                    exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                                                    className="text-[10px] font-medium text-indigo-500 dark:text-indigo-400/80 italic"
+                                                >
+                                                    {name.toLowerCase().includes('harsh') ? "That's a legendary name! 👑" : "You have a cute name <3"}
+                                                </motion.p>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Email</label>
+                                    <label htmlFor="email" className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 ml-1">Email</label>
                                     <Input
                                         id="email"
                                         name="email"
                                         type="email"
                                         placeholder="so I can reply..."
                                         required
-                                        className="bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition-all h-11"
                                     />
+                                    <div className="h-4 pl-1">
+                                        <AnimatePresence>
+                                            {email.includes('@') && (
+                                                <motion.p
+                                                    initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                    exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                                                    className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 italic"
+                                                >
+                                                    I'll keep this safe, promise! 🔒
+                                                </motion.p>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label htmlFor="subject" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Subject</label>
-                                <select
-                                    id="subject"
-                                    name="subject"
-                                    className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                >
-                                    <option value="Feature Request">✨ Feature Request</option>
-                                    <option value="Bug Report">🐛 Bug Report</option>
-                                    <option value="Feedback">💭 General Feedback</option>
-                                    <option value="Other">👋 Just saying hi</option>
-                                </select>
+                                <label htmlFor="subject" className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 ml-1">Subject</label>
+                                <div className="relative group/select">
+                                    <select
+                                        id="subject"
+                                        name="subject"
+                                        className="w-full h-11 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700"
+                                    >
+                                        <option value="Feature Request">✨ Feature Request</option>
+                                        <option value="Bug Report">🐛 Bug Report</option>
+                                        <option value="Feedback">💭 General Feedback</option>
+                                        <option value="Other">👋 Just saying hi</option>
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label htmlFor="message" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Message</label>
+                                <label htmlFor="message" className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 ml-1">Message</label>
                                 <Textarea
                                     id="message"
                                     name="message"
                                     placeholder="Tell me what's on your mind..."
                                     required
                                     rows={4}
-                                    className="resize-none bg-zinc-50/50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800"
+                                    className="resize-none bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition-all min-h-[120px]"
                                 />
                             </div>
 
@@ -156,26 +204,43 @@ export const FeedbackSection = () => {
                                 <p className="text-sm text-red-500 text-center">{lastError}</p>
                             )}
 
-                            <Button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11"
+                            <motion.div
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
                             >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Sending...
-                                    </>
-                                ) : (
-                                    <>
-                                        Send Message <Send className="ml-2 h-4 w-4" />
-                                    </>
-                                )}
-                            </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-full relative overflow-hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-12 rounded-xl group transition-all duration-300 shadow-lg shadow-indigo-500/20"
+                                >
+                                    <motion.div
+                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[100%]"
+                                        animate={!isSubmitting ? { translateX: ["-100%", "200%"] } : {}}
+                                        transition={{
+                                            repeat: Infinity,
+                                            duration: 2.5,
+                                            ease: "linear",
+                                            repeatDelay: 1
+                                        }}
+                                    />
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            <span>Sending...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                                Send Message <Send className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+                                            </span>
+                                        </>
+                                    )}
+                                </Button>
+                            </motion.div>
                         </form>
                     )}
                 </div>
-            </div>
+            </motion.div>
         </section>
     );
 };

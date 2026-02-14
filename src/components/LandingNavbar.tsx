@@ -78,20 +78,34 @@ export const LandingNavbar = () => {
                 {/* Desktop Actions */}
                 <div className="hidden md:flex items-center gap-4">
                     <a href="https://buymeacoffee.com/harshpal" target="_blank" rel="noreferrer">
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button size="sm" className="relative overflow-hidden gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-bold shadow-sm hover:shadow-md transition-all rounded-full px-5 group">
+                        <motion.div whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.95 }}>
+                            <Button size="sm" className="relative overflow-hidden gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-extrabold shadow-sm hover:shadow-yellow-500/20 transition-all rounded-full px-5 group/btn">
                                 <motion.div
                                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-[100%]"
                                     animate={{ translateX: ["-100%", "200%"] }}
                                     transition={{
                                         repeat: Infinity,
-                                        duration: 2,
+                                        duration: 2.5,
                                         ease: "linear",
-                                        repeatDelay: 3
+                                        repeatDelay: 2
                                     }}
                                 />
-                                <Coffee className="w-4 h-4 relative z-10" />
-                                <span className="font-bold relative z-10">Buy coffee</span>
+                                <motion.div
+                                    animate={{
+                                        rotate: [0, -10, 10, -10, 0],
+                                        scale: [1, 1.1, 1, 1.1, 1]
+                                    }}
+                                    transition={{
+                                        repeat: Infinity,
+                                        duration: 2.5,
+                                        ease: "easeInOut",
+                                        repeatDelay: 1.5
+                                    }}
+                                    className="relative z-10"
+                                >
+                                    <Coffee className="w-3.5 h-3.5 fill-current" />
+                                </motion.div>
+                                <span className="relative z-10">Buy coffee</span>
                             </Button>
                         </motion.div>
                     </a>
@@ -132,19 +146,32 @@ export const LandingNavbar = () => {
                             ))}
                             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
                                 <a href="https://buymeacoffee.com/harshpal" target="_blank" rel="noreferrer" className="block">
-                                    <Button className="w-full relative overflow-hidden gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-bold">
+                                    <Button className="w-full relative overflow-hidden gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-extrabold h-12 rounded-xl">
                                         <motion.div
                                             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-[100%]"
                                             animate={{ translateX: ["-100%", "200%"] }}
                                             transition={{
                                                 repeat: Infinity,
-                                                duration: 2,
+                                                duration: 2.5,
                                                 ease: "linear",
-                                                repeatDelay: 3
+                                                repeatDelay: 2
                                             }}
                                         />
-                                        <Coffee className="w-4 h-4 relative z-10" />
-                                        Buy me a coffee
+                                        <motion.div
+                                            animate={{
+                                                rotate: [0, -10, 10, -10, 0],
+                                                scale: [1, 1.1, 1, 1.1, 1]
+                                            }}
+                                            transition={{
+                                                repeat: Infinity,
+                                                duration: 2.5,
+                                                ease: "easeInOut"
+                                            }}
+                                            className="relative z-10"
+                                        >
+                                            <Coffee className="w-4 h-4 fill-current" />
+                                        </motion.div>
+                                        <span className="relative z-10">Buy me a coffee</span>
                                     </Button>
                                 </a>
                             </div>

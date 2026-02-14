@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { motion } from "framer-motion";
-import { Pencil, Coffee } from 'lucide-react';
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Pencil, Coffee, Check } from 'lucide-react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
 
@@ -31,6 +32,7 @@ export const MainLayout = () => {
     const [isCropOpen, setIsCropOpen] = useState(false);
     const [editingName, setEditingName] = useState<string | null>(null);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
 
     useEffect(() => {
         if (fileName && editingName === null) {
@@ -43,6 +45,8 @@ export const MainLayout = () => {
     const handleNameBlur = () => {
         if (editingName !== null && editingName.trim() !== "") {
             renameLottie(editingName);
+            setIsSaved(true);
+            setTimeout(() => setIsSaved(false), 2000);
         }
         setEditingName(null);
     };
@@ -120,17 +124,64 @@ export const MainLayout = () => {
                         </div>
                     </motion.div>
 
-                    {/* Filename Input - Centered with hover effect */}
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 group">
-                        <input
-                            className="bg-transparent text-center font-medium text-sm focus:outline-none focus:bg-muted/50 rounded-md px-2 py-1 min-w-[120px] transition-all hover:bg-muted/30 placeholder:text-muted-foreground/50"
-                            value={editingName !== null ? editingName : fileName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            onBlur={handleNameBlur}
-                            onKeyDown={handleNameKeyDown}
-                            spellCheck={false}
-                        />
-                        <Pencil className="size-3 text-muted-foreground opacity-0 group-hover:opacity-50 transition-opacity" />
+                    {/* Filename Input - Centered with premium interaction */}
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-1.5 group">
+                        <div className="relative flex items-center">
+                            <input
+                                className={cn(
+                                    "bg-transparent text-center font-bold text-sm focus:outline-none transition-all duration-300 rounded-lg px-3 py-1.5 min-w-[140px] placeholder:text-muted-foreground/30",
+                                    editingName !== null
+                                        ? "bg-muted shadow-[0_0_20px_-5px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_-5px_rgba(255,255,255,0.05)] ring-1 ring-border"
+                                        : "hover:bg-muted/50 cursor-pointer"
+                                )}
+                                value={editingName !== null ? editingName : (fileName || "Untitled")}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onFocus={(e) => {
+                                    if (editingName === null) setEditingName(fileName || "");
+                                    e.currentTarget.select();
+                                }}
+                                onBlur={handleNameBlur}
+                                onKeyDown={handleNameKeyDown}
+                                spellCheck={false}
+                                style={{ width: `${Math.max((editingName !== null ? editingName : (fileName || "Untitled")).length * 8.5 + 40, 140)}px` }}
+                            />
+
+                            <div className="absolute -right-7 flex items-center justify-center">
+                                <AnimatePresence mode="wait">
+                                    {isSaved ? (
+                                        <motion.div
+                                            key="saved"
+                                            initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
+                                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                            exit={{ opacity: 0, scale: 0.5 }}
+                                            className="text-green-500"
+                                        >
+                                            <Check className="size-3.5 stroke-[3]" />
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="pencil"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: editingName !== null ? 0 : (fileName ? 0.4 : 0) }}
+                                            whileHover={{ opacity: 0.8, scale: 1.1 }}
+                                            className="text-muted-foreground transition-opacity"
+                                        >
+                                            <Pencil className="size-3 cursor-pointer" />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Focus glow effect */}
+                            {editingName !== null && (
+                                <motion.div
+                                    layoutId="input-glow"
+                                    className="absolute inset-0 -z-10 bg-indigo-500/5 blur-xl rounded-full"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                />
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-3">

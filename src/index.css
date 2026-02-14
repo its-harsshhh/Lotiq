@@ -25,6 +25,7 @@
     --input: 240 5.9% 90%;
     --ring: 245 100% 65%;
     --radius: 0.5rem;
+    color-scheme: light;
   }
 
   .dark {
@@ -47,6 +48,7 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 245 100% 65%;
+    color-scheme: dark;
   }
 }
 
@@ -62,6 +64,38 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Autofill Styles */
+  input:-webkit-autofill,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    -webkit-box-shadow: 0 0 0px 1000px hsl(var(--background)) inset !important;
+    box-shadow: 0 0 0px 1000px hsl(var(--background)) inset !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+  }
+
+  /* Explicit dark mode override for autofill */
+  .dark input:-webkit-autofill,
+  .dark textarea:-webkit-autofill,
+  .dark select:-webkit-autofill {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0px 1000px #09090b inset !important;
+    box-shadow: 0 0 0px 1000px #09090b inset !important;
+  }
+
+  /* Form Element color-scheme */
+  input,
+  textarea,
+  select {
+    color-scheme: auto !important;
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select {
+    color-scheme: dark !important;
   }
 }
 

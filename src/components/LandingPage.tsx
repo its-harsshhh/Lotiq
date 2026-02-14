@@ -7,6 +7,7 @@ import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate, use
 import { Button } from "./ui/button";
 import { LandingNavbar } from "./LandingNavbar";
 import { FeedbackSection } from "./FeedbackSection";
+import { Footer } from "./Footer";
 import { cn } from "@/lib/utils";
 
 // --- Local Components for Interaction ---
@@ -186,7 +187,7 @@ export const LandingPage = () => {
 
             <ParallaxBackground />
 
-            <main className="relative z-10 w-full max-w-4xl mx-auto px-6 py-16 flex flex-col items-center flex-grow pt-32">
+            <main className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center flex-grow pt-32">
 
                 {/* 1. HERO SECTION */}
                 <motion.div
@@ -484,10 +485,49 @@ export const LandingPage = () => {
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
                         Lotiq is free to use. If it saves you time, you can support it with a coffee ☕
                     </p>
-                    <a href="https://buymeacoffee.com/harshpal" target="_blank" rel="noreferrer">
-                        <Button className="gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-bold shadow-sm hover:shadow-md transition-all rounded-full px-6">
-                            <Coffee className="w-4 h-4" /> Buy me a coffee
-                        </Button>
+                    <a href="https://buymeacoffee.com/harshpal" target="_blank" rel="noreferrer" className="inline-block group">
+                        <motion.div
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <Button className="relative overflow-hidden gap-2 bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black border-none font-bold shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40 transition-all duration-300 rounded-full px-8 py-6 text-base group/btn">
+                                {/* Steam/Energy particles */}
+                                <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-[100%]"
+                                    animate={{ translateX: ["-100%", "200%"] }}
+                                    transition={{
+                                        repeat: Infinity,
+                                        duration: 2.5,
+                                        ease: "linear",
+                                        repeatDelay: 2
+                                    }}
+                                />
+
+                                <div className="relative z-10 flex items-center gap-2">
+                                    <motion.div
+                                        animate={{
+                                            rotate: [0, -10, 10, -10, 0],
+                                            scale: [1, 1.1, 1, 1.1, 1]
+                                        }}
+                                        transition={{
+                                            repeat: Infinity,
+                                            duration: 2,
+                                            ease: "easeInOut",
+                                            repeatDelay: 1
+                                        }}
+                                    >
+                                        <Coffee className="w-5 h-5 fill-current" />
+                                    </motion.div>
+                                    <span className="font-extrabold tracking-tight">Buy me a coffee</span>
+                                </div>
+
+                                {/* Shine effect on hover */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                            </Button>
+                        </motion.div>
                     </a>
                 </motion.div>
 
@@ -503,16 +543,9 @@ export const LandingPage = () => {
                 </motion.div>
 
                 {/* 9. FOOTER */}
-                <footer className="w-full pt-20 pb-8 text-center" role="contentinfo">
-                    <div className="flex items-center justify-center gap-6 text-xs text-zinc-400 dark:text-zinc-500 font-medium">
-                        <span>Built by Harsh</span>
-                        <span className="w-1 h-1 rounded-full bg-zinc-200 dark:bg-zinc-800"></span>
-                        <span>Runs locally in your browser</span>
-                        <span className="w-1 h-1 rounded-full bg-zinc-200 dark:bg-zinc-800"></span>
-                        <span>MIT License</span>
-                    </div>
-                </footer>
+
             </main>
+            <Footer />
         </div>
     );
 };
