@@ -194,7 +194,7 @@ export const LandingPage = () => {
                     variants={staggerContainer}
                     initial="hidden"
                     animate="visible"
-                    className="text-center space-y-6 max-w-2xl mx-auto mb-10"
+                    className="text-center space-y-6 max-w-4xl mx-auto mb-10"
                 >
                     <motion.div
                         variants={fadeInUp}
@@ -215,7 +215,7 @@ export const LandingPage = () => {
                         <span className="text-indigo-600 dark:text-indigo-400 inline-block">in seconds, not minutes.</span>
                     </motion.h1>
 
-                    <motion.p variants={fadeInUp} className="text-base text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
+                    <motion.p variants={fadeInUp} className="text-base text-zinc-600 dark:text-zinc-400 max-w-none mx-auto leading-relaxed">
                         Lotiq lets you inspect, tweak, and export animations in seconds. Runs entirely in your browser.
                     </motion.p>
 
