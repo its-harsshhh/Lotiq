@@ -54,7 +54,8 @@ export const ExportPanel = () => {
         preset: socialPreset,
         resolution: socialResolution,
         bgColor: socialBgColor,
-        padding: socialPadding
+        padding: socialPadding,
+        phoneScreenBg
     } = socialSettings;
 
     // Quality presets (height in pixels)
@@ -119,23 +120,29 @@ export const ExportPanel = () => {
     const handleLottieExport = async () => {
         if (!lottieData) return;
         setIsExporting(true);
+        setExportProgress(0);
+        setExportStatus("Packaging .lottie...");
 
         try {
             const zip = new JSZip();
             const animationId = "animation_0";
 
-            // 1. Manifest
+            // 1. Manifest (Must strictly match dotLottie schema)
             const manifest = {
-                version: 1,
                 generator: "Lotiq v1.0",
+                version: "1.0", // version MUST be a string
+                revision: 1,
+                author: "Lotiq",
                 animations: [
                     {
                         id: animationId,
                         speed: 1,
                         themeColor: "#ffffff",
-                        loop: true
+                        loop: true,
+                        direction: 1
                     }
-                ]
+                ],
+                custom: {}
             };
             zip.file("manifest.json", JSON.stringify(manifest, null, 2));
 
@@ -143,11 +150,16 @@ export const ExportPanel = () => {
             const animContent = JSON.stringify(lottieData);
             zip.file(`animations/${animationId}.json`, animContent);
 
+            setExportProgress(0.5);
+            setExportStatus("Compressing...");
+
             // 3. Generate Zip
             const content = await zip.generateAsync({ type: "blob" });
 
             downloadBlob(content, `${fileName.replace('.json', '')}.lottie`);
 
+            setExportProgress(1);
+            setExportStatus("Completed");
             toast.success(".LOTTIE exported successfully");
             handleSuccess();
         } catch (e) {
@@ -821,6 +833,9 @@ export const ExportPanel = () => {
                 loop: false,
                 autoplay: false,
                 animationData: animationDataClone,
+                rendererSettings: {
+                    preserveAspectRatio: 'xMidYMid meet'
+                }
             });
 
             setExportStatus("Loading Animation...");
@@ -881,9 +896,11 @@ export const ExportPanel = () => {
                 ctx.roundRect(mock.screenX, mock.screenY, mock.screenW, mock.screenH, mock.screenRadius);
                 ctx.clip();
 
-                // Draw black BG for screen
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(mock.screenX, mock.screenY, mock.screenW, mock.screenH);
+                // Draw BG for screen
+                if (phoneScreenBg !== 'transparent') {
+                    ctx.fillStyle = phoneScreenBg === 'white' ? '#ffffff' : '#000000';
+                    ctx.fillRect(mock.screenX, mock.screenY, mock.screenW, mock.screenH);
+                }
 
                 // Draw Lottie (Centered/Contained)
                 ctx.drawImage(lottieImg, mock.screenX, mock.screenY, mock.screenW, mock.screenH);
@@ -981,6 +998,8 @@ export const ExportPanel = () => {
                 toast.success("Social Post exported!");
             }
 
+            setExportProgress(1);
+            setExportStatus("Completed");
             handleSuccess();
 
         } catch (e: any) {

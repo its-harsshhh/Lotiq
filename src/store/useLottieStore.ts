@@ -37,6 +37,7 @@ interface LottieState {
         padding: number;
         fps: 24 | 30 | 60;
         format: 'webm' | 'mp4';
+        phoneScreenBg: 'black' | 'white' | 'transparent';
     };
     setSocialSettings: (settings: Partial<LottieState['socialSettings']>) => void;
     toggleSocialPreview: () => void;
@@ -328,7 +329,8 @@ export const useLottieStore = create<LottieState>((set, get) => {
             bgColor: '#F3F4F6',
             padding: 20,
             fps: 30,
-            format: 'webm'
+            format: 'webm',
+            phoneScreenBg: 'black' as const
         },
         setSocialSettings: (settings) => set(produce((state: LottieState) => {
             state.socialSettings = { ...state.socialSettings, ...settings };

@@ -68,7 +68,7 @@ export const SocialExportModal = ({ open, onClose, onExport }: SocialExportModal
                     autoplay: true,
                     animationData: JSON.parse(JSON.stringify(lottieData)),
                     rendererSettings: {
-                        preserveAspectRatio: 'xMidYMid slice' // Always fill screen in preview
+                        preserveAspectRatio: 'xMidYMid meet' // Always fit inside screen without cropping
                     }
                 });
                 animationRef.current = anim;
@@ -193,7 +193,10 @@ export const SocialExportModal = ({ open, onClose, onExport }: SocialExportModal
                                     {/* Dynamic Island */}
                                     <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-full z-20" />
                                     {/* Screen */}
-                                    <div className="relative bg-black rounded-[2.5rem] overflow-hidden w-full h-full flex items-center justify-center">
+                                    <div className={cn(
+                                        "relative rounded-[2.5rem] overflow-hidden w-full h-full flex items-center justify-center",
+                                        socialSettings.phoneScreenBg === 'white' ? 'bg-white' : socialSettings.phoneScreenBg === 'transparent' ? 'bg-transparent/0' : 'bg-black'
+                                    )}>
                                         <div ref={containerRef} className="w-full h-full" />
                                         <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-white/5 pointer-events-none" />
                                     </div>
@@ -318,6 +321,24 @@ export const SocialExportModal = ({ open, onClose, onExport }: SocialExportModal
                                     onChange={(val) => updateSetting('bgColor', val)}
                                 />
                             </div>
+                        </div>
+
+                        {/* Screen Background */}
+                        <div className="space-y-3">
+                            <Label className="text-zinc-100">Screen Background</Label>
+                            <Select
+                                value={socialSettings.phoneScreenBg}
+                                onValueChange={(val) => updateSetting('phoneScreenBg', val)}
+                            >
+                                <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-100">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="black">Dark / Black</SelectItem>
+                                    <SelectItem value="white">Light / White</SelectItem>
+                                    <SelectItem value="transparent">Transparent</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </div>

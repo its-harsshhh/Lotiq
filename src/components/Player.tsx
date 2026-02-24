@@ -3,7 +3,7 @@ import lottie, { type AnimationItem } from 'lottie-web';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
 import { useSelectionStore } from '@/store/useSelectionStore';
-import { LayoutTemplate, Smartphone } from 'lucide-react'; // Import LayoutTemplate
+import { LayoutTemplate, Smartphone, Sun, Moon } from 'lucide-react'; // Import LayoutTemplate
 import { cn } from '@/lib/utils';
 
 export const Player = () => {
@@ -13,6 +13,7 @@ export const Player = () => {
     // Stores
     const lottieData = useLottieStore((state) => state.lottie);
     const socialSettings = useLottieStore((state) => state.socialSettings);
+    const setSocialSettings = useLottieStore((state) => state.setSocialSettings);
     const toggleSocialPreview = useLottieStore((state) => state.toggleSocialPreview);
 
     // New Device Preview Store
@@ -56,11 +57,9 @@ export const Player = () => {
                 autoplay: isPlaying, // Use store state
                 animationData: animationData,
                 rendererSettings: {
-                    // Critical Fix: Use 'slice' (cover) when in preview mode to fill the phone screen.
-                    // This prevents black bars (letterboxing) when content AR != phone AR.
-                    preserveAspectRatio: (devicePreviewEnabled || socialSettings.enabled)
-                        ? 'xMidYMid slice'
-                        : 'xMidYMid meet'
+                    // Use 'meet' to ensure the animation fits perfectly inside the screen 
+                    // without getting cropped, regardless of its original aspect ratio.
+                    preserveAspectRatio: 'xMidYMid meet'
                 }
             });
 
@@ -175,6 +174,23 @@ export const Player = () => {
 
             {/* Toggles - Top Right */}
             <div className="absolute top-3 right-3 z-20 flex gap-2">
+                {/* Screen Background Toggle */}
+                {(devicePreviewEnabled || socialSettings.enabled) && (
+                    <button
+                        onClick={() => {
+                            const isDark = socialSettings.phoneScreenBg !== 'white';
+                            setSocialSettings({ phoneScreenBg: isDark ? 'white' : 'black' });
+                        }}
+                        className={cn(
+                            "p-2 rounded-lg border transition-all",
+                            "hover:bg-muted/80 bg-background/80 border-border text-muted-foreground"
+                        )}
+                        title={socialSettings.phoneScreenBg === 'white' ? "Switch to dark screen" : "Switch to light screen"}
+                    >
+                        {socialSettings.phoneScreenBg === 'white' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    </button>
+                )}
+
                 {/* Device Preview Toggle */}
                 <button
                     onClick={toggleDevicePreview}
@@ -264,7 +280,10 @@ export const Player = () => {
 
                                 {/* Screen - Matches Device Preview (rounded-[2.5rem]) */}
                                 <div
-                                    className="relative bg-black rounded-[2.5rem] overflow-hidden w-full h-full flex items-center justify-center"
+                                    className={cn(
+                                        "relative rounded-[2.5rem] overflow-hidden w-full h-full flex items-center justify-center",
+                                        socialSettings.phoneScreenBg === 'white' ? 'bg-white' : socialSettings.phoneScreenBg === 'transparent' ? 'bg-transparent/0' : 'bg-black'
+                                    )}
                                 >
                                     {/* Animation Container */}
                                     <div ref={containerRef} className="w-full h-full" />
@@ -296,7 +315,10 @@ export const Player = () => {
                             <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-full z-20" />
 
                             {/* Screen */}
-                            <div className="relative bg-black rounded-[2.5rem] overflow-hidden w-full h-full flex items-center justify-center">
+                            <div className={cn(
+                                "relative rounded-[2.5rem] overflow-hidden w-full h-full flex items-center justify-center",
+                                socialSettings.phoneScreenBg === 'white' ? 'bg-white' : socialSettings.phoneScreenBg === 'transparent' ? 'bg-transparent/0' : 'bg-black'
+                            )}>
                                 <div ref={containerRef} className="w-full h-full" />
                             </div>
 
