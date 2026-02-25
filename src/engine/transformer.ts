@@ -384,6 +384,15 @@ export const renameLayer = (draft: LottieJSON, layerInd: number, newName: string
     const layer = draft.layers.find(l => l.ind === layerInd);
     if (layer) {
         layer.nm = newName;
+
+        // If it's a Text Layer, also update the actual text content being rendered
+        if (layer.ty === 5 && layer.t && layer.t.d && Array.isArray(layer.t.d.k)) {
+            layer.t.d.k.forEach((keyframe: any) => {
+                if (keyframe.s && typeof keyframe.s.t === 'string') {
+                    keyframe.s.t = newName;
+                }
+            });
+        }
     }
 };
 

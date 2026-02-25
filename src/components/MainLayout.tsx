@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Pencil, Coffee, Check } from 'lucide-react';
+import { Pencil, Coffee, Check, Code, PenTool } from 'lucide-react';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
 
@@ -18,6 +18,7 @@ import { EmptyState } from './EmptyState';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { ExportProgress } from './ExportProgress'; // Import Progress Component
+import { DevModeComingSoon } from './DevModeComingSoon';
 
 export const MainLayout = () => {
     const lottie = useLottieStore((state) => state.lottie);
@@ -33,6 +34,7 @@ export const MainLayout = () => {
     const [editingName, setEditingName] = useState<string | null>(null);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const [isDevMode, setIsDevMode] = useState(false);
 
     useEffect(() => {
         if (fileName && editingName === null) {
@@ -104,25 +106,65 @@ export const MainLayout = () => {
                 className="h-screen w-full flex flex-col bg-background text-foreground"
             >
                 <header className="h-14 flex items-center px-4 justify-between bg-background/80 backdrop-blur-xl border-b border-border/40 z-20 relative select-none">
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="font-bold text-xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => {
-                            const hasEdits = history.length > 1;
-                            if (hasEdits && !hasExportedThisSession) {
-                                setShowCloseConfirm(true);
-                            } else {
-                                window.location.reload();
-                            }
-                        }}
-                    >
-                        {/* Logo with better dark mode handling */}
-                        <div className="relative h-7 w-auto">
-                            <img src="/logo/logo-light-mode.svg" alt="Lotiq" className="h-full w-auto dark:hidden" />
-                            <img src="/logo/logo-dark-mode.svg" alt="Lotiq" className="h-full w-auto hidden dark:block" />
+                    <div className="flex items-center gap-6">
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="font-bold text-xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => {
+                                const hasEdits = history.length > 1;
+                                if (hasEdits && !hasExportedThisSession) {
+                                    setShowCloseConfirm(true);
+                                } else {
+                                    window.location.reload();
+                                }
+                            }}
+                        >
+                            {/* Logo with better dark mode handling */}
+                            <div className="relative h-7 w-auto">
+                                <img src="/logo/logo-light-mode.svg" alt="Lotiq" className="h-full w-auto dark:hidden" />
+                                <img src="/logo/logo-dark-mode.svg" alt="Lotiq" className="h-full w-auto hidden dark:block" />
+                            </div>
+                        </motion.div>
+
+                        {/* Dev Mode Switch - Figma Style */}
+                        <div className="flex bg-muted/60 p-1 rounded-[14px] border border-border/40 items-center shrink-0">
+                            <button
+                                onClick={() => setIsDevMode(false)}
+                                title="Design Mode"
+                                className={cn("relative p-1.5 w-[34px] rounded-[12px] flex items-center justify-center transition-colors duration-300 select-none z-10",
+                                    !isDevMode
+                                        ? "text-[#5B4DFF]"
+                                        : "text-muted-foreground hover:text-foreground")}
+                            >
+                                {!isDevMode && (
+                                    <motion.div
+                                        layoutId="devModeBackground"
+                                        className="absolute inset-0 bg-[#5B4DFF]/15 border border-[#5B4DFF]/30 shadow-[0_1px_3px_rgba(91,77,255,0.15)] rounded-[12px] -z-10"
+                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                    />
+                                )}
+                                <PenTool className="w-4 h-4 relative z-10" />
+                            </button>
+                            <button
+                                onClick={() => setIsDevMode(true)}
+                                title="Dev Mode"
+                                className={cn("relative p-1.5 w-[34px] rounded-[12px] flex items-center justify-center transition-colors duration-300 select-none z-10",
+                                    isDevMode
+                                        ? "text-green-600 dark:text-green-400"
+                                        : "text-muted-foreground hover:text-foreground")}
+                            >
+                                {isDevMode && (
+                                    <motion.div
+                                        layoutId="devModeBackground"
+                                        className="absolute inset-0 bg-green-500/15 border border-green-500/30 shadow-[0_1px_3px_rgba(34,197,94,0.15)] rounded-[12px] -z-10"
+                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                    />
+                                )}
+                                <Code className="w-4 h-4 relative z-10" />
+                            </button>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Filename Input - Centered with premium interaction */}
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-1.5 group">
@@ -247,28 +289,52 @@ export const MainLayout = () => {
                     </DialogContent>
                 </Dialog>
 
-                <div className="flex-1 min-h-0 overflow-hidden">
-                    <ResizableLayout
-                        leftPanel={<InspectorLeft />}
-                        centerPanel={
-                            <div className="h-full flex flex-col min-w-0 bg-zinc-50/50 dark:bg-zinc-950/50 relative">
-                                {lottie ? (
-                                    <>
-                                        <Player />
-                                        <Controls onCrop={() => setIsCropOpen(true)} />
-                                        <ExportProgress />
-                                    </>
-                                ) : (
-                                    <EmptyState />
-                                )}
-                            </div>
-                        }
-                        rightPanel={<InspectorRight />}
-                        leftDefaultWidth={280}
-                        rightDefaultWidth={280}
-                        minWidth={200}
-                        maxWidth={400}
-                    />
+                <div className="flex-1 min-h-0 overflow-hidden relative">
+                    <AnimatePresence mode="wait">
+                        {isDevMode ? (
+                            <motion.div
+                                key="dev-mode"
+                                initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -15, scale: 0.98 }}
+                                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                                className="absolute inset-0"
+                            >
+                                <DevModeComingSoon />
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="design-mode"
+                                initial={{ opacity: 0, y: -15, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 15, scale: 0.98 }}
+                                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                                className="absolute inset-0"
+                            >
+                                <ResizableLayout
+                                    leftPanel={<InspectorLeft />}
+                                    centerPanel={
+                                        <div className="h-full flex flex-col min-w-0 bg-zinc-50/50 dark:bg-zinc-950/50 relative">
+                                            {lottie ? (
+                                                <>
+                                                    <Player />
+                                                    <Controls onCrop={() => setIsCropOpen(true)} />
+                                                    <ExportProgress />
+                                                </>
+                                            ) : (
+                                                <EmptyState />
+                                            )}
+                                        </div>
+                                    }
+                                    rightPanel={<InspectorRight />}
+                                    leftDefaultWidth={280}
+                                    rightDefaultWidth={280}
+                                    minWidth={200}
+                                    maxWidth={400}
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 <CropModal open={isCropOpen} onClose={() => setIsCropOpen(false)} />

@@ -124,6 +124,29 @@ export const LayerList = () => {
     const [isGrouping, setIsGrouping] = useState(false);
     const [newGroupName, setNewGroupName] = useState("Group 1");
 
+    // Global Shortcuts
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'g') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    if (selectedLayerIds.length === 1) {
+                        updateLottie((draft) => {
+                            ungroupLayer(draft, selectedLayerIds[0]);
+                        });
+                    }
+                } else {
+                    if (selectedLayerIds.length > 0) {
+                        setNewGroupName("Group 1");
+                        setIsGrouping(true);
+                    }
+                }
+            }
+        };
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [selectedLayerIds, updateLottie]);
+
     // Build layer hierarchy - find which layers are children of which
     const { layerDepthMap, layersWithChildren } = useMemo(() => {
         if (!lottie) return { layerDepthMap: new Map(), layersWithChildren: new Set() };
@@ -286,31 +309,7 @@ export const LayerList = () => {
         });
     };
 
-    // Global Shortcuts
-    useEffect(() => {
-        const handleGlobalKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'g') {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    // Ungroup selected layer if it's a group
-                    // We need to know which layer is selected and if it is a group.
-                    // For simplicity, if one group layer is selected, ungroup it.
-                    if (selectedLayerIds.length === 1) {
-                        // We need access to layer data to check if it is a group, or just try to ungroup.
-                        // Since we are inside useEffect, we might not have fresh lottie state unless it's in dependency.
-                        // But updateLottie handles the state update. We just need to trigger it.
-                        // However, handleUngroup takes layerInd.
-                        handleUngroup(selectedLayerIds[0]);
-                    }
-                } else {
-                    handleGroup();
-                }
-            }
-        };
-        window.addEventListener('keydown', handleGlobalKeyDown);
-        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-    }, [selectedLayerIds, updateLottie]);
-
+    // Layer helpers
     const isExpandable = (layerInd: number) => layersWithChildren.has(layerInd);
     const isGroup = (layer: any) => layer.ty === 3 || layer.ty === 0;
 
@@ -328,7 +327,6 @@ export const LayerList = () => {
         return lottie.layers.find(l => l.ind === contextMenu.layerInd);
     };
 
-    // Get layer type icon with color
     const getLayerIcon = (type: number, isSelected: boolean) => {
         const baseClass = "size-3.5 shrink-0";
         const selectedClass = isSelected ? "text-white" : "";
@@ -349,6 +347,14 @@ export const LayerList = () => {
             default:
                 return <LayersIcon className={cn(baseClass, selectedClass || "text-zinc-500")} />;
         }
+    };
+
+    const getLayerDisplayName = (layer: any) => {
+        if (!layer) return "Layer";
+        if (layer.ty === 5 && layer.t?.d?.k?.[0]?.s?.t) {
+            return layer.t.d.k[0].s.t;
+        }
+        return layer.nm || `Layer ${layer.ind}`;
     };
 
     return (
@@ -439,7 +445,7 @@ export const LayerList = () => {
                                                     layer.hd && "opacity-50 line-through"
                                                 )}
                                             >
-                                                {layer.nm || `Layer ${layer.ind}`}
+                                                {getLayerDisplayName(layer)}
                                             </span>
                                         )}
                                     </div>
@@ -469,11 +475,11 @@ export const LayerList = () => {
                     x={contextMenu.x}
                     y={contextMenu.y}
                     layerInd={contextMenu.layerInd}
-                    layerName={getContextMenuLayer()?.nm || `Layer ${contextMenu.layerInd}`}
+                    layerName={getLayerDisplayName(getContextMenuLayer())}
                     isHidden={getContextMenuLayer()?.hd || false}
                     isGroup={isGroup(getContextMenuLayer())}
                     onClose={() => setContextMenu(null)}
-                    onRename={() => startEditing(contextMenu.layerInd, getContextMenuLayer()?.nm || `Layer ${contextMenu.layerInd}`)}
+                    onRename={() => startEditing(contextMenu.layerInd, getLayerDisplayName(getContextMenuLayer()))}
                     onDelete={() => setDeleteLayerId(contextMenu.layerInd)}
                     onToggleVisibility={() => handleToggle(contextMenu.layerInd)}
                     onDuplicate={() => handleDuplicate(contextMenu.layerInd)}
