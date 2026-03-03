@@ -46,13 +46,13 @@ export const CompareUrlLoader = ({ onLoad }: CompareUrlLoaderProps) => {
 
     return (
         <div className="w-full flex flex-col items-center gap-4 mt-4">
-            <div className="w-full relative">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
+            <div className="w-full relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center -z-10">
+                    <div className="w-full border-t border-zinc-100 dark:border-zinc-800" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-zinc-50 dark:bg-zinc-950/50 px-2 text-muted-foreground">Or load URL</span>
-                </div>
+                <span className="relative z-10 bg-white dark:bg-zinc-950 px-4 text-[10px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
+                    Or load URL
+                </span>
             </div>
 
             <div className="flex w-full items-center space-x-2">

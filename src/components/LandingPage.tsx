@@ -238,10 +238,12 @@ export const LandingPage = () => {
                                 <DropZone />
                             </div>
 
-                            <div className="w-full border-t border-zinc-100 dark:border-zinc-800 relative">
-                                <span className="absolute left-1/2 -top-2.5 -translate-x-1/2 bg-white dark:bg-zinc-900 px-3 text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                            <div className="w-full flex items-center gap-4">
+                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-zinc-800" />
+                                <span className="text-[10px] uppercase font-medium text-zinc-400 dark:text-zinc-500 tracking-widest whitespace-nowrap">
                                     or load URL
                                 </span>
+                                <div className="h-[1px] flex-1 bg-zinc-100 dark:bg-zinc-800" />
                             </div>
 
                             <div className="flex flex-col items-center w-full gap-4">

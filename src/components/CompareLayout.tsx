@@ -41,7 +41,7 @@ export const CompareLayout = () => {
             </header>
 
             {/* Main Workspace */}
-            <main className="flex-1 flex flex-col bg-zinc-50 dark:bg-zinc-950/50 relative">
+            <main className="flex-1 flex flex-col bg-white dark:bg-zinc-950 relative">
 
                 {/* Condition: Both loaded -> Show Dual Player */}
                 {lottieA && lottieB ? (
@@ -54,7 +54,7 @@ export const CompareLayout = () => {
                 ) : (
                     <div className="flex-1 flex flex-col md:flex-row w-full h-full">
                         {/* Lottie A Dropzone / Player */}
-                        <div className="flex-1 border-b md:border-b-0 md:border-r border-border/40 flex items-center justify-center p-8 bg-white dark:bg-zinc-950/20">
+                        <div className="flex-1 border-b md:border-b-0 md:border-r border-border/40 flex items-center justify-center p-8 bg-white dark:bg-zinc-950">
                             {!lottieA ? (
                                 <div className="flex flex-col items-center max-w-sm w-full">
                                     <CompareDropZone
@@ -81,7 +81,7 @@ export const CompareLayout = () => {
                         </div>
 
                         {/* Lottie B Dropzone / Player */}
-                        <div className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-zinc-950/20">
+                        <div className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-zinc-950">
                             {!lottieB ? (
                                 <div className="flex flex-col items-center max-w-sm w-full">
                                     <CompareDropZone
