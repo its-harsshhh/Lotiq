@@ -5,11 +5,13 @@ import { Button } from "./ui/button";
 import { ModeToggle } from "./mode-toggle";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useLottieStore } from "@/store/useLottieStore";
 
 export const LandingNavbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const setAppMode = useLottieStore((state) => state.setAppMode);
 
     const { scrollY } = useScroll();
 
@@ -27,6 +29,7 @@ export const LandingNavbar = () => {
 
     const navLinks = [
         { name: "Features", id: "features" },
+        { name: "Compare Lotties", id: "compare", isSpecial: true },
         { name: "Privacy", id: "trust" },
         { name: "Support", id: "support" },
     ];
@@ -58,7 +61,14 @@ export const LandingNavbar = () => {
                     {navLinks.map((link, index) => (
                         <button
                             key={link.name}
-                            onClick={() => scrollToSection(link.id)}
+                            onClick={() => {
+                                if (link.isSpecial && link.id === 'compare') {
+                                    setAppMode('compare');
+                                    window.scrollTo(0, 0);
+                                } else {
+                                    scrollToSection(link.id);
+                                }
+                            }}
                             onMouseEnter={() => setHoveredIndex(index)}
                             onMouseLeave={() => setHoveredIndex(null)}
                             className="relative px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
@@ -138,7 +148,14 @@ export const LandingNavbar = () => {
                             {navLinks.map((link) => (
                                 <button
                                     key={link.name}
-                                    onClick={() => scrollToSection(link.id)}
+                                    onClick={() => {
+                                        if (link.isSpecial && link.id === 'compare') {
+                                            setAppMode('compare');
+                                            window.scrollTo(0, 0);
+                                        } else {
+                                            scrollToSection(link.id);
+                                        }
+                                    }}
                                     className="text-left text-base font-medium text-zinc-600 dark:text-zinc-400 py-2"
                                 >
                                     {link.name}

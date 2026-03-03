@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { produce } from 'immer';
 import { v4 as uuidv4 } from 'uuid';
 import type { LottieJSON } from '../engine/lottie-schema';
+import { useCompareStore } from './useCompareStore';
 
 export interface Page {
     id: string;
@@ -81,6 +82,10 @@ interface LottieState {
     // Editor UI State
     isEditorMode: boolean;
     setEditorMode: (active: boolean) => void;
+
+    // App Mode State
+    appMode: 'editor' | 'compare';
+    setAppMode: (mode: 'editor' | 'compare') => void;
 }
 
 const MAX_HISTORY = 40;
@@ -117,6 +122,9 @@ export const useLottieStore = create<LottieState>((set, get) => {
         isEditorMode: false,
         setEditorMode: (active) => set({ isEditorMode: active }),
 
+        appMode: 'editor',
+        setAppMode: (mode) => set({ appMode: mode }),
+
         pages: [defaultPage],
         activePageId: defaultPage.id,
 
@@ -133,6 +141,9 @@ export const useLottieStore = create<LottieState>((set, get) => {
                 state.fileName = newPage.fileName;
                 state.history = newPage.history;
                 state.historyIndex = newPage.historyIndex;
+
+                // Reset comparison state for the new page
+                useCompareStore.getState().reset();
             }));
         },
 
@@ -177,6 +188,9 @@ export const useLottieStore = create<LottieState>((set, get) => {
                     state.fileName = page.fileName;
                     state.history = page.history;
                     state.historyIndex = page.historyIndex;
+
+                    // Reset comparison state when switching pages
+                    useCompareStore.getState().reset();
                 }
             }));
         },

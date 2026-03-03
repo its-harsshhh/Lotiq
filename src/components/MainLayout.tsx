@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 import { ExportProgress } from './ExportProgress'; // Import Progress Component
 import { DevModeComingSoon } from './DevModeComingSoon';
+import { CompareLayout } from './CompareLayout';
 
 export const MainLayout = () => {
     const lottie = useLottieStore((state) => state.lottie);
@@ -96,6 +97,13 @@ export const MainLayout = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [togglePlay, undo, redo]);
+
+    const appMode = useLottieStore((state) => state.appMode);
+
+    // If the user is in Compare mode, render the CompareLayout entirely replacing MainLayout.
+    if (appMode === 'compare') {
+        return <CompareLayout />;
+    }
 
     if (isEditorMode) {
         return (

@@ -47,7 +47,7 @@ export const PageList = () => {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 hover:bg-zinc-200 dark:hover:bg-zinc-800 opacity-0 group-hover/header:opacity-100 transition-opacity"
+                    className="h-5 w-5 hover:bg-zinc-200 dark:hover:bg-zinc-800 opacity-40 group-hover/header:opacity-100 transition-opacity"
                     onClick={(e) => { e.stopPropagation(); addPage(); }}
                 >
                     <Plus className="h-3.5 w-3.5" />

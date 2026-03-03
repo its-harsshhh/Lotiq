@@ -3,7 +3,8 @@ import lottie, { type AnimationItem } from 'lottie-web';
 import { useLottieStore } from '@/store/useLottieStore';
 import { usePlaybackStore } from '@/store/usePlaybackStore';
 import { useSelectionStore } from '@/store/useSelectionStore';
-import { LayoutTemplate, Smartphone, Sun, Moon } from 'lucide-react'; // Import LayoutTemplate
+import { useCompareStore } from '@/store/useCompareStore'; // Import Compare Store
+import { LayoutTemplate, Smartphone, Sun, Moon, GitCompare } from 'lucide-react'; // Import GitCompare
 import { cn } from '@/lib/utils';
 
 export const Player = () => {
@@ -12,6 +13,9 @@ export const Player = () => {
 
     // Stores
     const lottieData = useLottieStore((state) => state.lottie);
+    const setAppMode = useLottieStore((state) => state.setAppMode);
+    const activePageId = useLottieStore((state) => state.activePageId);
+    const pages = useLottieStore((state) => state.pages);
     const socialSettings = useLottieStore((state) => state.socialSettings);
     const setSocialSettings = useLottieStore((state) => state.setSocialSettings);
     const toggleSocialPreview = useLottieStore((state) => state.toggleSocialPreview);
@@ -169,8 +173,33 @@ export const Player = () => {
         return () => ro.disconnect();
     }, [socialSettings.enabled, socialSettings.padding, socialSettings.preset]); // Re-run mostly on layout changes
 
+    const setLottieA = useCompareStore((state) => state.setLottieA);
+    const fileName = useLottieStore((state) => state.fileName);
+
     return (
         <div className="flex-1 relative bg-secondary/10 flex items-center justify-center overflow-hidden" onClick={handleCanvasClick}>
+
+            {/* Toggles - Top Left (Compare) */}
+            {activePageId === pages[0]?.id && (
+                <div className="absolute top-3 left-3 z-20">
+                    <button
+                        onClick={() => {
+                            if (lottieData) {
+                                setLottieA(lottieData, fileName);
+                            }
+                            setAppMode('compare');
+                        }}
+                        className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all",
+                            "hover:bg-muted/80 bg-background/80 border-border text-muted-foreground hover:text-foreground shadow-sm"
+                        )}
+                        title="Compare with another Lottie"
+                    >
+                        <GitCompare className="w-4 h-4 text-indigo-500" />
+                        <span className="text-xs font-semibold">Compare</span>
+                    </button>
+                </div>
+            )}
 
             {/* Toggles - Top Right */}
             <div className="absolute top-3 right-3 z-20 flex gap-2">

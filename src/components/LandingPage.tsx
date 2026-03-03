@@ -8,6 +8,7 @@ import { Button } from "./ui/button";
 import { LandingNavbar } from "./LandingNavbar";
 import { FeedbackSection } from "./FeedbackSection";
 import { Footer } from "./Footer";
+import { TrySampleLottie } from "./TrySampleLottie";
 import { cn } from "@/lib/utils";
 
 // --- Local Components for Interaction ---
@@ -243,8 +244,9 @@ export const LandingPage = () => {
                                 </span>
                             </div>
 
-                            <div className="flex justify-center w-full">
+                            <div className="flex flex-col items-center w-full gap-4">
                                 <UrlLoader />
+                                <TrySampleLottie />
                             </div>
                         </div>
                     </div>
