@@ -30,8 +30,7 @@ export const LandingNavbar = () => {
     const navLinks = [
         { name: "Features", id: "features" },
         { name: "Compare Lotties", id: "compare", isSpecial: true },
-        { name: "Privacy", id: "trust" },
-        { name: "Support", id: "support" },
+        { name: "Tutorial", id: "tutorial" },
     ];
 
     return (
@@ -62,8 +61,11 @@ export const LandingNavbar = () => {
                         <button
                             key={link.name}
                             onClick={() => {
-                                if (link.isSpecial && link.id === 'compare') {
+                                if (link.id === 'compare') {
                                     setAppMode('compare');
+                                    window.scrollTo(0, 0);
+                                } else if (link.id === 'tutorial') {
+                                    setAppMode('tutorial');
                                     window.scrollTo(0, 0);
                                 } else {
                                     scrollToSection(link.id);
@@ -149,8 +151,11 @@ export const LandingNavbar = () => {
                                 <button
                                     key={link.name}
                                     onClick={() => {
-                                        if (link.isSpecial && link.id === 'compare') {
+                                        if (link.id === 'compare') {
                                             setAppMode('compare');
+                                            window.scrollTo(0, 0);
+                                        } else if (link.id === 'tutorial') {
+                                            setAppMode('tutorial');
                                             window.scrollTo(0, 0);
                                         } else {
                                             scrollToSection(link.id);

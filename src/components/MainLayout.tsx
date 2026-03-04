@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ExportProgress } from './ExportProgress'; // Import Progress Component
 import { DevModeComingSoon } from './DevModeComingSoon';
 import { CompareLayout } from './CompareLayout';
+import { TutorialPage } from './TutorialPage';
 
 export const MainLayout = () => {
     const lottie = useLottieStore((state) => state.lottie);
@@ -99,6 +100,11 @@ export const MainLayout = () => {
     }, [togglePlay, undo, redo]);
 
     const appMode = useLottieStore((state) => state.appMode);
+
+    // If the user is in Tutorial mode, render the TutorialPage.
+    if (appMode === 'tutorial') {
+        return <TutorialPage />;
+    }
 
     // If the user is in Compare mode, render the CompareLayout entirely replacing MainLayout.
     if (appMode === 'compare') {

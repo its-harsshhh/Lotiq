@@ -84,8 +84,8 @@ interface LottieState {
     setEditorMode: (active: boolean) => void;
 
     // App Mode State
-    appMode: 'editor' | 'compare';
-    setAppMode: (mode: 'editor' | 'compare') => void;
+    appMode: 'editor' | 'compare' | 'tutorial';
+    setAppMode: (mode: 'editor' | 'compare' | 'tutorial') => void;
 }
 
 const MAX_HISTORY = 40;

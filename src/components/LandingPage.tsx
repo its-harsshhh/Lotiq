@@ -1,8 +1,21 @@
-import { useRef } from 'react';
 import { DropZone } from "./DropZone";
 import { UrlLoader } from "./UrlLoader";
 import { PasteHandler } from "./PasteHandler";
-import { Layers, Coffee, Shield, Zap, Lock, Palette, Eye, MousePointer2 } from "lucide-react";
+import {
+    Coffee,
+    Palette,
+    GitCompare,
+    Code2,
+    Copy,
+    Smartphone,
+    LayoutTemplate,
+    Crop,
+    Download,
+    Zap,
+    ShieldCheck,
+    UserCheck,
+    Moon
+} from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate, useScroll } from "framer-motion";
 import { Button } from "./ui/button";
 import { LandingNavbar } from "./LandingNavbar";
@@ -69,63 +82,6 @@ const TiltCard = ({ children, className, ...props }: any) => {
     );
 };
 
-const SpotlightCard = ({ children, className, ...props }: any) => {
-    const divRef = useRef<HTMLDivElement>(null);
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!divRef.current) return;
-        const rect = divRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        divRef.current.style.setProperty("--mouse-x", `${x}px`);
-        divRef.current.style.setProperty("--mouse-y", `${y}px`);
-        divRef.current.style.setProperty("--opacity", "1");
-    };
-
-    const handleMouseLeave = () => {
-        if (!divRef.current) return;
-        divRef.current.style.setProperty("--opacity", "0");
-    };
-
-    return (
-        <motion.div
-            ref={divRef}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            {...props}
-            className={cn(
-                "relative h-full overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors group/spotlight",
-                className
-            )}
-        >
-            {/* Spotlight Overlay */}
-            <div
-                className="pointer-events-none absolute -inset-px opacity-0 transition duration-300 z-10"
-                style={{
-                    opacity: `var(--opacity, 0)`,
-                    background: `radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(99,102,241,0.1), transparent 40%)`,
-                }}
-            />
-            {/* Border Highlight */}
-            <div
-                className="pointer-events-none absolute -inset-px opacity-0 transition duration-300 z-20"
-                style={{
-                    opacity: `var(--opacity, 0)`,
-                    background: `radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(99,102,241,0.4), transparent 40%)`,
-                    maskImage: `linear-gradient(black, black) content-box, linear-gradient(black, black)`,
-                    WebkitMaskImage: `linear-gradient(black, black) content-box, linear-gradient(black, black)`,
-                    maskComposite: `exclude`,
-                    WebkitMaskComposite: `xor`,
-                    padding: '1px' // Width of the border
-                }}
-            />
-
-            <div className="relative z-0 h-full">
-                {children}
-            </div>
-        </motion.div>
-    );
-};
 
 const ParallaxBackground = () => {
     const { scrollY } = useScroll();
@@ -188,14 +144,14 @@ export const LandingPage = () => {
 
             <ParallaxBackground />
 
-            <main className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center flex-grow pt-32">
+            <main className="relative z-10 w-full flex flex-col items-center flex-grow pt-32 px-6">
 
                 {/* 1. HERO SECTION */}
                 <motion.div
                     variants={staggerContainer}
                     initial="hidden"
                     animate="visible"
-                    className="text-center space-y-6 max-w-4xl mx-auto mb-10"
+                    className="text-center space-y-6 max-w-2xl mx-auto mb-10 w-full"
                 >
                     <motion.div
                         variants={fadeInUp}
@@ -208,7 +164,7 @@ export const LandingPage = () => {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                         </span>
-                        v2.0 Beta · Tweak, Crop, and Export in seconds
+                        v3.0 Live · Compare Lotties side-by-side
                     </motion.div>
 
                     <motion.h1 variants={fadeInUp} className="text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.1]">
@@ -227,7 +183,7 @@ export const LandingPage = () => {
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ delay: 0.4, duration: 0.8, type: "spring", bounce: 0.4 }}
-                    className="w-full max-w-xl mx-auto mb-16"
+                    className="w-full max-w-xl mx-auto mb-20"
                 >
                     <div className="relative group rounded-3xl p-1 bg-gradient-to-br from-indigo-50/50 via-white to-zinc-50 dark:from-indigo-500/10 dark:via-zinc-900 dark:to-zinc-900 shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 hover:shadow-indigo-200/20 dark:hover:shadow-indigo-500/10 transition-all duration-500">
                         <div className="absolute inset-0 bg-white dark:bg-zinc-900 rounded-3xl opacity-60 backdrop-blur-xl"></div>
@@ -254,56 +210,132 @@ export const LandingPage = () => {
                     </div>
                 </motion.div>
 
-                {/* 3. WHY LOTIQ SECTION */}
+                {/* 3. NEW FEATURE GRID SECTION */}
                 <motion.div
                     id="features"
                     variants={staggerContainer}
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-50px" }}
-                    className="w-full max-w-3xl mx-auto text-center space-y-10 mb-6"
+                    className="w-full max-w-[1440px] mx-auto space-y-20 mb-32"
                 >
-                    <motion.h2 variants={fadeInUp} className="text-2xl font-bold text-zinc-900 dark:text-white">Why Lotiq?</motion.h2>
+                    <div className="text-center space-y-5">
+                        <motion.h2 variants={fadeInUp} className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">
+                            Built for the real-world workflow.
+                        </motion.h2>
+                        <motion.p variants={fadeInUp} className="text-zinc-500 dark:text-zinc-400 max-w-3xl mx-auto text-lg">
+                            Stop pinging your motion designer for small tweaks. Lotiq gives you the power to optimize, brand, and package animations directly in your browser.
+                        </motion.p>
+                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
                         {[
                             {
-                                title: 'Instant tweaks',
+                                title: 'Compare Lotties',
+                                text: 'Compare two Lotties side-by-side with synchronized playback. Perfect for QA and optimization checks.',
+                                icon: GitCompare,
+                                color: 'text-indigo-500',
+                                bg: 'bg-indigo-500/10'
+                            },
+                            {
+                                title: 'Dev Mode',
+                                text: 'Bridge the gap between design and dev. Inspect JSON structure and copy clean code snippets instantly.',
+                                icon: Code2,
+                                color: 'text-green-500',
+                                bg: 'bg-green-500/10',
+                                badge: 'Coming Soon'
+                            },
+                            {
+                                title: 'Multi-Page Canvas',
+                                text: 'Work on an entire suite of animations at once. Switch between pages without re-importing.',
+                                icon: Copy,
+                                color: 'text-blue-500',
+                                bg: 'bg-blue-500/10'
+                            },
+                            {
+                                title: 'Live Device Preview',
+                                text: 'Wrap your animation in a high-fidelity iPhone mockup to see how it looks in a real mobile context.',
+                                icon: Smartphone,
+                                color: 'text-orange-500',
+                                bg: 'bg-orange-500/10'
+                            },
+                            {
+                                title: 'Social Mockup Engine',
+                                text: 'Render Lotties inside social post containers with custom backgrounds for "Share-Ready" exports.',
+                                icon: LayoutTemplate,
+                                color: 'text-pink-500',
+                                bg: 'bg-pink-500/10'
+                            },
+                            {
+                                title: 'Precise Canvas Cropping',
+                                text: 'Adjust width, height, and padding. Standardize your Lottie dimensions without reopening AE.',
+                                icon: Crop,
+                                color: 'text-purple-500',
+                                bg: 'bg-purple-500/10'
+                            },
+                            {
+                                title: 'Real-Time Color Transformer',
+                                text: 'Identify and swap colors across all layers instantly. Batch-edit branding with a live preview.',
                                 icon: Palette,
-                                text: "Change colors, layers, and canvas in seconds.",
-                                iconBg: 'bg-zinc-50 dark:bg-zinc-800',
-                                iconColor: 'text-zinc-600 dark:text-zinc-400'
+                                color: 'text-amber-500',
+                                bg: 'bg-amber-500/10'
                             },
                             {
-                                title: 'Live preview',
-                                icon: Eye,
-                                text: "See changes instantly and export with confidence.",
-                                iconBg: 'bg-zinc-50 dark:bg-zinc-800',
-                                iconColor: 'text-zinc-600 dark:text-zinc-400'
+                                title: 'Universal Media Export',
+                                text: 'Export to any format: JSON, .lottie, GIF, or high-res Video (WebM/MP4) with one click.',
+                                icon: Download,
+                                color: 'text-emerald-500',
+                                bg: 'bg-emerald-500/10'
                             },
                             {
-                                title: 'Workflow friendly',
-                                icon: MousePointer2,
-                                text: "Fix small things without leaving your flow.",
-                                iconBg: 'bg-zinc-50 dark:bg-zinc-800',
-                                iconColor: 'text-zinc-600 dark:text-zinc-400'
+                                title: 'In-Browser Optimization',
+                                text: 'Compress embedded assets (PNG to WebP) inside the browser to shrink file sizes by up to 80%.',
+                                icon: Zap,
+                                color: 'text-yellow-500',
+                                bg: 'bg-yellow-500/10'
+                            },
+                            {
+                                title: '100% Client-Side Engine',
+                                text: 'No servers. No data leaks. Everything is processed in your browser memory for maximum privacy.',
+                                icon: ShieldCheck,
+                                color: 'text-red-500',
+                                bg: 'bg-red-500/10'
+                            },
+                            {
+                                title: 'Friendly UI',
+                                text: 'A clean UI that lets PMs and Devs tweak animations without disturbing motion designers.',
+                                icon: UserCheck,
+                                color: 'text-cyan-500',
+                                bg: 'bg-cyan-500/10'
+                            },
+                            {
+                                title: 'Dark & Light Mode',
+                                text: 'Seamlessly switch between themes for late-night dev sessions or daylight design reviews.',
+                                icon: Moon,
+                                color: 'text-zinc-600 dark:text-zinc-400',
+                                bg: 'bg-zinc-500/10'
                             }
                         ].map((item, i) => (
                             <TiltCard
                                 key={i}
                                 variants={fadeInUp}
                                 whileHover={{ y: -5 }}
-                                className="h-full p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all"
+                                className="h-full group p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-500/20 transition-all duration-300 relative"
                             >
-                                <div className="flex flex-col h-full gap-6">
-                                    <div className="flex-shrink-0">
-                                        <div className={cn("p-2 w-fit rounded-lg border shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300", item.iconBg, "border-zinc-100 dark:border-zinc-800")}>
-                                            <item.icon className={cn("w-5 h-5", item.iconColor)} />
-                                        </div>
+                                <div className="flex flex-col h-full gap-5">
+                                    <div className={cn("p-3 w-fit rounded-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3", item.bg)}>
+                                        <item.icon className={cn("w-6 h-6", item.color)} />
                                     </div>
-                                    <div className="space-y-1">
-                                        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{item.title}</h3>
-                                        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-500 transition-colors">{item.title}</h3>
+                                            {item.badge && (
+                                                <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider border border-green-500/20">
+                                                    {item.badge}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
                                             {item.text}
                                         </p>
                                     </div>
@@ -313,154 +345,6 @@ export const LandingPage = () => {
                     </div>
                 </motion.div>
 
-                {/* 4. FEATURE STRIP */}
-                <motion.div
-                    variants={staggerContainer}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-50px" }}
-                    className="w-full max-w-3xl mx-auto space-y-12 mb-32"
-                >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Feature 1 */}
-                        <TiltCard
-                            variants={fadeInUp}
-                            whileHover={{ y: -5 }}
-                            className="h-full p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all"
-                        >
-                            <div className="flex flex-col h-full gap-6">
-                                <div className="flex-shrink-0">
-                                    <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                        <div className="w-5 h-5 rounded-full bg-indigo-500 shadow-sm" />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Global color editing</h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                        Automatically detects all colors in your animation. Change once, update everywhere.
-                                    </p>
-                                </div>
-                            </div>
-                        </TiltCard>
-
-                        {/* Feature 2 */}
-                        <TiltCard
-                            variants={fadeInUp}
-                            whileHover={{ y: -5 }}
-                            className="h-full p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all"
-                        >
-                            <div className="flex flex-col h-full gap-6">
-                                <div className="flex-shrink-0">
-                                    <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                        <Layers className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Layer visibility</h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                        Hide or remove layers without touching keyframes or complicating your project file.
-                                    </p>
-                                </div>
-                            </div>
-                        </TiltCard>
-
-                        {/* Feature 3 */}
-                        <TiltCard
-                            variants={fadeInUp}
-                            whileHover={{ y: -5 }}
-                            className="h-full p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all"
-                        >
-                            <div className="flex flex-col h-full gap-6">
-                                <div className="flex-shrink-0">
-                                    <div className="p-2 w-fit bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-100 dark:border-zinc-800 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                        <svg className="w-5 h-5 text-zinc-400 dark:text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M15 3v18" /><path d="M3 15h18" /></svg>
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Canvas fixes</h3>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                        Adjust width, height, and padding. Standardize your Lottie dimensions without reopening AE.
-                                    </p>
-                                </div>
-                            </div>
-                        </TiltCard>
-                    </div>
-
-                </motion.div>
-
-                {/* 5. TRUST & PRIVACY - Aceternity Style Bento Grid */}
-                <motion.div
-                    id="trust"
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    variants={fadeInUp}
-                    className="w-full max-w-4xl mx-auto mb-32"
-                >
-                    <div className="text-center mb-12 space-y-4">
-                        <h2 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">Your files stay with you.</h2>
-                        <p className="text-zinc-500 dark:text-zinc-400">Zero data leaks. Lotiq runs entirely in your browser.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Card 1 */}
-                        <SpotlightCard
-                            whileHover={{ y: -5 }}
-                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/10 hover:border-indigo-100 dark:hover:border-indigo-900/50"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 dark:from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="relative z-10 flex flex-col gap-8 p-8 h-full">
-                                <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                    <Shield className="w-5 h-5 text-indigo-500" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-zinc-900 dark:text-white mb-1">Local Processing</h3>
-                                    <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                                        Your Lottie files never leave your device. We process everything in-memory.
-                                    </p>
-                                </div>
-                            </div>
-                        </SpotlightCard>
-
-                        {/* Card 2 */}
-                        <SpotlightCard
-                            whileHover={{ y: -5 }}
-                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/10 hover:border-indigo-100 dark:hover:border-indigo-900/50"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 dark:from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="relative z-10 flex flex-col gap-8 p-8 h-full">
-                                <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                    <Zap className="w-5 h-5 text-indigo-500" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-zinc-900 dark:text-white mb-1">No Accounts</h3>
-                                    <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                                        Jump straight in. No signups, no credit cards, no "free trial" friction.
-                                    </p>
-                                </div>
-                            </div>
-                        </SpotlightCard>
-
-                        {/* Card 3 */}
-                        <SpotlightCard
-                            whileHover={{ y: -5 }}
-                            className="group relative overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/10 hover:border-indigo-100 dark:hover:border-indigo-900/50"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 dark:from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="relative z-10 flex flex-col gap-8 p-8 h-full">
-                                <div className="h-10 w-10 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                    <Lock className="w-5 h-5 text-indigo-500" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-zinc-900 dark:text-white mb-1">Private by Default</h3>
-                                    <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                                        No tracking scripts or analytics. What you browse is your business.
-                                    </p>
-                                </div>
-                            </div>
-                        </SpotlightCard>
-                    </div>
-                </motion.div>
 
                 {/* 6. SOCIAL PROOF / BUILDER NOTE - Elevated Card */}
                 <motion.div
@@ -476,7 +360,6 @@ export const LandingPage = () => {
                     <div className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">— Harsh</div>
                 </motion.div>
 
-                {/* 7. SUPPORT / COFFEE */}
                 {/* 7. SUPPORT / COFFEE */}
                 <motion.div
                     id="support"
@@ -525,7 +408,7 @@ export const LandingPage = () => {
                                     >
                                         <Coffee className="w-5 h-5 fill-current" />
                                     </motion.div>
-                                    <span className="font-extrabold tracking-tight">Buy me a coffee</span>
+                                    <span className="font-extrabold tracking-tight">Support development</span>
                                 </div>
 
                                 {/* Shine effect on hover */}
