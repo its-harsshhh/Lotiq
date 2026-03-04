@@ -267,7 +267,7 @@ export const LandingPage = () => {
                                 bg: 'bg-pink-500/10'
                             },
                             {
-                                title: 'Precise Canvas Cropping',
+                                title: 'Animation cropping',
                                 text: 'Adjust width, height, and padding. Standardize your Lottie dimensions without reopening AE.',
                                 icon: Crop,
                                 color: 'text-purple-500',
@@ -288,7 +288,7 @@ export const LandingPage = () => {
                                 bg: 'bg-emerald-500/10'
                             },
                             {
-                                title: 'In-Browser Optimization',
+                                title: 'Image Optimization',
                                 text: 'Compress embedded assets (PNG to WebP) inside the browser to shrink file sizes by up to 80%.',
                                 icon: Zap,
                                 color: 'text-yellow-500',
