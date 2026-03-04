@@ -1,13 +1,10 @@
-
 import { motion } from "framer-motion";
-import { ArrowLeft, Coffee, Play, Youtube, Info, Sparkles } from "lucide-react";
+import { Coffee, Youtube, Info, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
-import { useLottieStore } from "@/store/useLottieStore";
-import { ModeToggle } from "./mode-toggle";
+import { LandingNavbar } from "./LandingNavbar";
 import { Footer } from "./Footer";
 
 export const TutorialPage = () => {
-    const setAppMode = useLottieStore((state) => state.setAppMode);
 
     const fadeInUp = {
         hidden: { opacity: 0, y: 20 },
@@ -20,36 +17,9 @@ export const TutorialPage = () => {
 
     return (
         <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 flex flex-col">
-            {/* Header */}
-            <header className="h-16 flex items-center px-6 justify-between border-b border-zinc-100 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50">
-                <div className="flex items-center gap-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setAppMode('editor')}
-                        className="gap-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-full"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back
-                    </Button>
-                    <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
-                    <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
-                        <Play className="w-5 h-5 text-indigo-500 fill-indigo-500" />
-                        <span>Tutorials</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <ModeToggle />
-                    <a href="https://buymeacoffee.com/harshpal" target="_blank" rel="noreferrer">
-                        <Button size="sm" className="hidden sm:flex bg-[#FFDD00] hover:bg-[#FFDD00]/90 text-black font-bold rounded-full gap-2">
-                            <Coffee className="w-4 h-4" />
-                            Support
-                        </Button>
-                    </a>
-                </div>
-            </header>
+            <LandingNavbar />
 
-            <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12">
+            <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-24 pb-12">
                 <motion.div
                     initial="hidden"
                     animate="visible"

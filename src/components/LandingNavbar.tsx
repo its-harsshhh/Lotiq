@@ -11,6 +11,7 @@ export const LandingNavbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const appMode = useLottieStore((state) => state.appMode);
     const setAppMode = useLottieStore((state) => state.setAppMode);
 
     const { scrollY } = useScroll();
@@ -29,15 +30,23 @@ export const LandingNavbar = () => {
 
     const navLinks = [
         { name: "Features", id: "features" },
-        { name: "Compare Lotties", id: "compare", isSpecial: true },
+        { name: "Compare Lotties", id: "compare" },
         { name: "Tutorial", id: "tutorial" },
     ];
+
+    const getActiveIndex = () => {
+        if (appMode === 'tutorial') return 2;
+        if (appMode === 'compare') return 1;
+        return null;
+    };
+
+    const activeIndex = getActiveIndex();
 
     return (
         <nav
             className={cn(
                 "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
-                scrolled
+                (scrolled || appMode !== 'editor')
                     ? "border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl shadow-sm"
                     : "border-transparent bg-transparent"
             )}
@@ -49,7 +58,12 @@ export const LandingNavbar = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    onClick={() => {
+                        if (appMode !== 'editor') {
+                            setAppMode('editor');
+                        }
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                 >
                     <img src="/logo/logo-light-mode.svg" alt="Lotiq" className="h-8 w-auto dark:hidden" />
                     <img src="/logo/logo-dark-mode.svg" alt="Lotiq" className="h-8 w-auto hidden dark:block" />
@@ -68,17 +82,32 @@ export const LandingNavbar = () => {
                                     setAppMode('tutorial');
                                     window.scrollTo(0, 0);
                                 } else {
-                                    scrollToSection(link.id);
+                                    if (appMode !== 'editor') {
+                                        setAppMode('editor');
+                                        setTimeout(() => scrollToSection(link.id), 100);
+                                    } else {
+                                        scrollToSection(link.id);
+                                    }
                                 }
                             }}
                             onMouseEnter={() => setHoveredIndex(index)}
                             onMouseLeave={() => setHoveredIndex(null)}
-                            className="relative px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                            className={cn(
+                                "relative px-4 py-2 text-sm font-medium transition-colors",
+                                (hoveredIndex === index || activeIndex === index)
+                                    ? "text-zinc-900 dark:text-zinc-100"
+                                    : "text-zinc-500 dark:text-zinc-400"
+                            )}
                         >
-                            {hoveredIndex === index && (
+                            {(hoveredIndex === index || activeIndex === index) && (
                                 <motion.span
                                     layoutId="nav-pill"
-                                    className="absolute inset-0 bg-zinc-100 dark:bg-zinc-800 rounded-full -z-10"
+                                    className={cn(
+                                        "absolute inset-0 rounded-full -z-10",
+                                        activeIndex === index
+                                            ? "bg-zinc-100 dark:bg-zinc-800"
+                                            : "bg-zinc-50 dark:bg-zinc-800/50"
+                                    )}
                                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                 />
                             )}
@@ -117,7 +146,7 @@ export const LandingNavbar = () => {
                                 >
                                     <Coffee className="w-3.5 h-3.5 fill-current" />
                                 </motion.div>
-                                <span className="relative z-10">Buy coffee</span>
+                                <span className="relative z-10">Support development</span>
                             </Button>
                         </motion.div>
                     </a>
@@ -193,7 +222,7 @@ export const LandingNavbar = () => {
                                         >
                                             <Coffee className="w-4 h-4 fill-current" />
                                         </motion.div>
-                                        <span className="relative z-10">Buy me a coffee</span>
+                                        <span className="relative z-10">Support development</span>
                                     </Button>
                                 </a>
                             </div>
