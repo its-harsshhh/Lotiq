@@ -260,7 +260,7 @@ export const MainLayout = () => {
                                     }}
                                 />
                                 <Coffee className="size-3.5 relative z-10" />
-                                <span className="text-xs relative z-10">Buy me a coffee</span>
+                                <span className="text-xs relative z-10">Support</span>
                             </Button>
                         </motion.div>
 

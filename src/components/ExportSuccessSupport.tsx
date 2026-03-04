@@ -25,8 +25,8 @@ export const ExportSuccessSupport = ({ showSupport = true }: ExportSuccessSuppor
                             <p className="text-xs text-muted-foreground">
                                 Saved you a few minutes?
                             </p>
-                            <p className="text-xs font-medium text-foreground">
-                                Support Lotiq with a coffee ☕
+                            <p className="text-xs font-bold text-foreground">
+                                Support Lotiq
                             </p>
                         </div>
 
@@ -38,7 +38,7 @@ export const ExportSuccessSupport = ({ showSupport = true }: ExportSuccessSuppor
                             }}
                         >
                             <Coffee className="size-3.5" />
-                            Buy me a coffee
+                            Support Lotiq
                         </Button>
                     </div>
                 </>
